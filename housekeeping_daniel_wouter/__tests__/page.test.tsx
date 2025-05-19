@@ -29,7 +29,7 @@ describe('Home Page', () => {
   it('contains the code snippet path', () => {
     render(<Page />);
 
-    // expect(screen.getByText('src/app/page.tsx')).toBeInTheDocument();
-    expect(false);
+    throw new Error('Test failed: src/app/page.tsx');
+    expect(screen.getByText('src/app/page.tsx')).toBeInTheDocument();
   });
 });
