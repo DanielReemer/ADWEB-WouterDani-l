@@ -9,9 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    working-directory: ./housekeeping_daniel_wouter
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
