@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
+import React, { useEffect, useState } from "react";
+import {
+  useAuthState,
+  useCreateUserWithEmailAndPassword,
+} from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Loading from "../loading";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -14,8 +18,16 @@ export default function SignupPage() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [createUserWithEmailAndPassword] = useCreateUserWithEmailAndPassword(auth);
+  const [createUserWithEmailAndPassword] =
+    useCreateUserWithEmailAndPassword(auth);
   const router = useRouter();
+  const [user, loading] = useAuthState(auth);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setForm({
@@ -39,12 +51,27 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await createUserWithEmailAndPassword(form.email, form.password);
+      const response = await createUserWithEmailAndPassword(
+        form.email,
+        form.password
+      );
       setForm({ email: "", password: "", confirmPassword: "" });
 
+      console.log("Response:", response);
+      if (!response || !response.user) {
+        setError("Account aanmaken mislukt. Probeer het opnieuw.");
+        return;
+      }
+
       router.push("/");
-    } catch (errror) {}
+    } catch (errror: any) {
+      setError(
+        "Er is een fout opgetreden bij het aanmaken van het account. Probeer het opnieuw."
+      );
+    }
   }
+
+  if (loading || user) return <Loading />;
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-white to-blue-100 flex flex-col justify-center items-center">
@@ -115,7 +142,13 @@ export default function SignupPage() {
             />
           </div>
           {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+            <div
+              id="error-message"
+              className="rounded-md bg-red-100 border border-red-400 text-red-700 px-4 py-3"
+              role="alert"
+            >
+              {error}
+            </div>
           )}
           {success && (
             <div className="text-green-600 text-sm text-center">{success}</div>
