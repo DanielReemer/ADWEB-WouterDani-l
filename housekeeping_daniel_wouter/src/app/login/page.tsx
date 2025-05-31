@@ -27,7 +27,8 @@ export default function LoginPage() {
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-
+    setEmail("");
+    setPassword("");
     try {
       const response = await signInWithEmailAndPassword(email, password);
 
@@ -35,8 +36,7 @@ export default function LoginPage() {
         setError("Inloggen mislukt: Ongeldige gebruikersgegevens.");
         return;
       }
-      setEmail("");
-      setPassword("");
+
       router.push("/");
     } catch (error: any) {
       setError(
