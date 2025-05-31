@@ -1,7 +1,7 @@
 'use client'
 
-import GlobalLoading from "@/components/loading"
+import LoadingComponent from "@/components/Loading"
 
 export default function Loading() {
-    return <GlobalLoading />
+    return <LoadingComponent />
 }

@@ -1,6 +1,6 @@
 'use client';
 
-export default function GlobalLoading() {
+export default function LoadingComponent() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white text-gray-800">
         <div className="flex flex-col items-center space-y-6">
