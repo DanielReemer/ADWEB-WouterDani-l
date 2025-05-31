@@ -11,6 +11,11 @@ jest.mock("react-firebase-hooks/auth");
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
+jest.mock("@/lib/firebase", () => ({
+  auth: {
+    signInWithEmailAndPassword: jest.fn(),
+  },
+}));
 
 const mockPush = jest.fn();
 
