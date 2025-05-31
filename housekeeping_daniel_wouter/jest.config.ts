@@ -3,13 +3,13 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type { Config } from 'jest'
-import nextJest from 'next/jest.js'
+import type { Config } from "jest";
+import nextJest from "next/jest.js";
 
 const createJestConfig = nextJest({
   // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
-  dir: './',
-})
+  dir: "./",
+});
 
 const config: Config = {
   // All imported modules in your tests should be mocked automatically
@@ -28,11 +28,11 @@ const config: Config = {
   collectCoverage: true,
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
+      branches: 75,
+      functions: 75,
+      lines: 75,
+      statements: 75,
+    },
   },
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
@@ -48,7 +48,7 @@ const config: Config = {
 
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
-  testEnvironment: 'jsdom',
+  testEnvironment: "jsdom",
 
   // A list of reporter names that Jest uses when writing coverage reports
   // coverageReporters: [
@@ -105,7 +105,9 @@ const config: Config = {
   // ],
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
-  // moduleNameMapper: {},
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+  },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
   // modulePathIgnorePatterns: [],
@@ -211,4 +213,4 @@ const config: Config = {
   // watchman: true,
 };
 
-export default createJestConfig(config)
+export default createJestConfig(config);

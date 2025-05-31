@@ -7,8 +7,8 @@ import {
 } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import GlobalLoading from "../../components/loading";
 import Link from "next/link";
+import Loading from "../loading";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ export default function LoginPage() {
     }
   };
 
-  if (loading || user) return <GlobalLoading></GlobalLoading>;
+  if (loading || user) return <Loading />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-blue-100 flex items-center justify-center px-4">
