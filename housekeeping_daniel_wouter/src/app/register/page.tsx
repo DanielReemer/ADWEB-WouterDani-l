@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [createUserWithEmailAndPassword] = useCreateUserWithEmailAndPassword(auth);
+  const router = useRouter();
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setForm({
@@ -40,6 +41,8 @@ export default function SignupPage() {
     try {
       const response = await createUserWithEmailAndPassword(form.email, form.password);
       setForm({ email: "", password: "", confirmPassword: "" });
+
+      router.push("/");
     } catch (errror) {}
   }
 
