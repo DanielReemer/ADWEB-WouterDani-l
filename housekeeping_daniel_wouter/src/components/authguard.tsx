@@ -1,40 +1,43 @@
-'use client'
+"use client";
 
-import { ReactNode, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import Loading from '@/components/loading'
+import { ReactNode, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Loading from "@/components/loading";
 
-const PUBLIC_ROUTES = ['/login', '/register']
+const PUBLIC_ROUTES = ["/login", "/register"];
 
 interface Props {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function AuthGuard({ children }: Props) {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) return
+    if (!loading) {
+      const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+        pathname.startsWith(route)
+      );
 
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
-
-    if (!user && !isPublicRoute) {
-      router.replace('/login')
-    } else if (user && isPublicRoute) {
-      router.replace('/')
+      if (!user && !isPublicRoute) {
+        router.replace("/login");
+      } else if (user && isPublicRoute) {
+        router.replace("/");
+      }
     }
-  }, [user, loading, pathname, router])
+  }, [user, loading, pathname, router]);
 
-  if (loading) return <Loading />
+  if (loading) return <Loading />;
 
-  if (!loading) {
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
-    if (!user && !isPublicRoute) return <Loading />
-    if (user && isPublicRoute) return <Loading />
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+  if ((!user && !isPublicRoute) || (user && isPublicRoute)) {
+    return <Loading />;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
