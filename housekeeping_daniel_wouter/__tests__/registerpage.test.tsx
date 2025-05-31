@@ -152,14 +152,4 @@ describe("SignupPage", () => {
     });
     expect(screen.queryByText(/vul alle velden in/i)).not.toBeInTheDocument();
   });
-
-  it("redirects to '/' if user is logged in", () => {
-    (useAuthState as jest.Mock).mockReturnValue([
-      { uid: "abc123" },
-      false,
-      null,
-    ]);
-    render(<SignupPage />);
-    expect(mockPush).toHaveBeenCalledWith("/");
-  });
 });

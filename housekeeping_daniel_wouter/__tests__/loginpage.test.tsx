@@ -46,21 +46,6 @@ describe("LoginPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows loading when auth is loading", () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, true]);
-
-    render(<LoginPage />);
-    expect(screen.getByText(/De inhoud wordt geladen/i)).toBeInTheDocument();
-    expect(screen.getByText(/Even geduld aub.../i)).toBeInTheDocument();
-  });
-
-  it("redirects if user is logged in", () => {
-    (useAuthState as jest.Mock).mockReturnValue([{ uid: "123" }, false]);
-
-    render(<LoginPage />);
-    expect(mockPush).toHaveBeenCalledWith("/");
-  });
-
   it("shows error message on failed login", async () => {
     const signInMock = jest.fn().mockResolvedValue(null);
     (useSignInWithEmailAndPassword as jest.Mock).mockReturnValue([

@@ -49,8 +49,6 @@ export default function SignupPage() {
         form.password
       );
       setForm({ email: "", password: "", confirmPassword: "" });
-
-      console.log("Response:", response);
       if (!response || !response.user) {
         setError("Account aanmaken mislukt. Probeer het opnieuw.");
         return;
