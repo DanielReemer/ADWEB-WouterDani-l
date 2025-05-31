@@ -21,13 +21,6 @@ export default function SignupPage() {
   const [createUserWithEmailAndPassword] =
     useCreateUserWithEmailAndPassword(auth);
   const router = useRouter();
-  const [user, loading] = useAuthState(auth);
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/");
-    }
-  }, [user, loading, router]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setForm({
@@ -64,14 +57,12 @@ export default function SignupPage() {
       }
 
       router.push("/");
-    } catch (errror: any) {
+    } catch (error: any) {
       setError(
         "Er is een fout opgetreden bij het aanmaken van het account. Probeer het opnieuw."
       );
     }
   }
-
-  if (loading || user) return <Loading />;
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-white to-blue-100 flex flex-col justify-center items-center">

@@ -1,28 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import {
   useSignInWithEmailAndPassword,
-  useAuthState,
 } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Loading from "../loading";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
-  const [user, loading] = useAuthState(auth);
   const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/");
-    }
-  }, [user, loading, router]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,8 +35,6 @@ export default function LoginPage() {
       );
     }
   };
-
-  if (loading || user) return <Loading />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-blue-100 flex items-center justify-center px-4">
