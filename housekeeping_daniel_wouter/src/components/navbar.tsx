@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
+import Loading from "@/app/loading";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,11 +14,13 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-        await auth.signOut();
+      await auth.signOut();
     } catch (error: any) {
-        console.error("Uitloggen mislukt:", error);
+      console.error("Uitloggen mislukt:", error);
     }
   };
+
+  if (loading) return <Loading />;
 
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
@@ -42,7 +45,8 @@ export default function Navbar() {
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="text-white bg-red-500 hover:bg-red-600 px-4 py-1 rounded transition"
+                  className="text-white bg-red-500 hover:bg-red-600 px-4 py-1 rounded transition hover:shadow-md :hover:cursor-pointer"
+                  aria-label="Uitloggen"
                 >
                   Uitloggen
                 </button>
@@ -112,6 +116,7 @@ export default function Navbar() {
                 <button
                   onClick={handleLogout}
                   className="w-full text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded transition"
+                  aria-label="Uitloggen"
                 >
                   Uitloggen
                 </button>
