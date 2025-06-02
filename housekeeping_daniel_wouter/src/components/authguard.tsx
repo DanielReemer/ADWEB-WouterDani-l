@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Loading from "@/components/Loading";
+import Loading from "@/components/loading";
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 
