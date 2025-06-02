@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/navbar";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import "@testing-library/jest-dom";
