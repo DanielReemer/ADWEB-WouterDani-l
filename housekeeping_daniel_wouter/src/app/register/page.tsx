@@ -49,8 +49,6 @@ export default function SignupPage() {
         form.password
       );
 
-      resetForm();
-
       if (!response || !response.user) {
         setError("Account aanmaken mislukt. Probeer het opnieuw.");
         return;
@@ -58,12 +56,12 @@ export default function SignupPage() {
 
       router.push("/");
     } catch (error: unknown) {
-      resetForm();
-
       console.error("Signup error:", error);
       setError(
         "Er is een fout opgetreden bij het aanmaken van het account. Probeer het opnieuw."
       );
+    } finally {
+      resetForm();
     }
   }
 

@@ -31,16 +31,15 @@ export default function LoginPage() {
         return;
       }
 
-      resetForm();
-
       router.push("/");
     } catch (error: unknown) {
       console.error("Login error:", error);
-      resetForm();
       
       setError(
         "Er is een fout opgetreden bij het inloggen. Probeer het opnieuw."
       );
+    } finally {
+      resetForm();
     }
   };
 
