@@ -9,14 +9,18 @@ import Loading from "@/app/loading";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, loading } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   const handleLogout = async () => {
+    setError(null);
     try {
       await auth.signOut();
-    } catch (error: any) {
-      console.error("Uitloggen mislukt:", error);
+
+    } catch (error: unknown) {
+      console.error("Logout failed:", error);
+      setError("Uitloggen mislukt. Probeer het opnieuw of ververs de pagina.");
     }
   };
 
@@ -102,6 +106,17 @@ export default function Navbar() {
           )}
         </button>
       </nav>
+
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-2"
+            role="alert"
+          >
+            {error}
+          </div>
+        </div>
+      )}
 
       {menuOpen && (
         <div className="md:hidden bg-white shadow-md px-4 pt-2 pb-4 space-y-2">

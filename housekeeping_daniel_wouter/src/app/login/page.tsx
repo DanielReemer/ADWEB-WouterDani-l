@@ -14,12 +14,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
   const router = useRouter();
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+  };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    setEmail("");
-    setPassword("");
+
     try {
       const response = await signInWithEmailAndPassword(email, password);
 
@@ -28,8 +31,13 @@ export default function LoginPage() {
         return;
       }
 
+      resetForm();
+
       router.push("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Login error:", error);
+      resetForm();
+      
       setError(
         "Er is een fout opgetreden bij het inloggen. Probeer het opnieuw."
       );

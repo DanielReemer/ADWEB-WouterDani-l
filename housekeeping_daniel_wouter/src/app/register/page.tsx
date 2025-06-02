@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  useAuthState,
-  useCreateUserWithEmailAndPassword,
-} from "react-firebase-hooks/auth";
+import React, { useState } from "react";
+import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Loading from "../loading";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -16,11 +12,14 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>("");
   const [success, setSuccess] = useState("");
   const [createUserWithEmailAndPassword] =
     useCreateUserWithEmailAndPassword(auth);
   const router = useRouter();
+  const resetForm = () => {
+    setForm({ email: "", password: "", confirmPassword: "" });
+  };
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setForm({
@@ -33,6 +32,7 @@ export default function SignupPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
 
     if (!form.email || !form.password || !form.confirmPassword) {
       setError("Vul alle velden in.");
@@ -48,14 +48,19 @@ export default function SignupPage() {
         form.email,
         form.password
       );
-      setForm({ email: "", password: "", confirmPassword: "" });
+
+      resetForm();
+
       if (!response || !response.user) {
         setError("Account aanmaken mislukt. Probeer het opnieuw.");
         return;
       }
 
       router.push("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      resetForm();
+
+      console.error("Signup error:", error);
       setError(
         "Er is een fout opgetreden bij het aanmaken van het account. Probeer het opnieuw."
       );
