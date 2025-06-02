@@ -11,7 +11,6 @@ jest.mock("react-firebase-hooks/auth");
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
-
 jest.mock("@/lib/firebase", () => ({
   auth: {
     createUserWithEmailAndPassword: jest.fn(),
@@ -21,6 +20,22 @@ jest.mock("@/lib/firebase", () => ({
 describe("SignupPage", () => {
   const mockPush = jest.fn();
   const mockCreateUser = jest.fn();
+
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -35,8 +50,6 @@ describe("SignupPage", () => {
   });
 
   it("renders the signup form correctly", () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     render(<SignupPage />);
     expect(screen.getByLabelText(/e-mailadres/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^wachtwoord$/i)).toBeInTheDocument();
@@ -48,15 +61,12 @@ describe("SignupPage", () => {
   });
 
   it("shows error if fields are empty on submit", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     render(<SignupPage />);
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
     expect(await screen.findByText(/vul alle velden in/i)).toBeInTheDocument();
   });
 
   it("shows error if passwords do not match", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
       target: { value: "test@example.com" },
@@ -74,8 +84,6 @@ describe("SignupPage", () => {
   });
 
   it("calls createUserWithEmailAndPassword and redirects on successful signup", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     mockCreateUser.mockResolvedValue({ user: { uid: "abc123" } });
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
@@ -88,6 +96,7 @@ describe("SignupPage", () => {
       target: { value: "password123" },
     });
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
+
     await waitFor(() => {
       expect(mockCreateUser).toHaveBeenCalledWith(
         "test@example.com",
@@ -98,10 +107,8 @@ describe("SignupPage", () => {
   });
 
   it("shows error if createUserWithEmailAndPassword returns no user", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
     mockCreateUser.mockResolvedValue(null);
     render(<SignupPage />);
-
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
       target: { value: "test@example.com" },
     });
@@ -112,6 +119,7 @@ describe("SignupPage", () => {
       target: { value: "password123" },
     });
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
+
     expect(
       await screen.findByText(
         /account aanmaken mislukt\. probeer het opnieuw\./i
@@ -121,7 +129,6 @@ describe("SignupPage", () => {
   });
 
   it("shows error if createUserWithEmailAndPassword throws an error", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
     mockCreateUser.mockRejectedValue(new Error("Firebase error"));
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
@@ -134,6 +141,7 @@ describe("SignupPage", () => {
       target: { value: "password123" },
     });
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
+
     expect(
       await screen.findByText(
         /er is een fout opgetreden bij het aanmaken van het account\. probeer het opnieuw\./i
@@ -143,7 +151,6 @@ describe("SignupPage", () => {
   });
 
   it("clears error and success messages when typing", async () => {
-    (useAuthState as jest.Mock).mockReturnValue([null, false]);
     render(<SignupPage />);
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
     expect(await screen.findByText(/vul alle velden in/i)).toBeInTheDocument();

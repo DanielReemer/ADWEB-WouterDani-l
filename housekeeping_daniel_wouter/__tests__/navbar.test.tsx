@@ -1,12 +1,13 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import Navbar from "@/components/navbar";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase";
 import "@testing-library/jest-dom";
-
-jest.mock("@/context/AuthContext", () => ({
-  useAuth: jest.fn(),
-}));
 
 jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -14,15 +15,27 @@ jest.mock("next/link", () => {
   );
 });
 
+jest.mock("@/context/AuthContext", () => ({
+  useAuth: jest.fn(),
+}));
+
 jest.mock("@/lib/firebase", () => ({
-  auth: {
-    signOut: jest.fn(),
-  },
+  auth: {},
+}));
+
+jest.mock("@/context/AuthContext", () => ({
+  useAuth: jest.fn(),
+}));
+
+const signOutMock = jest.fn();
+jest.mock("react-firebase-hooks/auth", () => ({
+  useSignOut: () => [signOutMock],
 }));
 
 describe("Navbar", () => {
   afterEach(() => {
     jest.clearAllMocks();
+    signOutMock.mockReset();
   });
 
   it("shows loading component if loading is true", () => {
@@ -75,22 +88,24 @@ describe("Navbar", () => {
       user: { email: "test@user.com" },
       loading: false,
     });
-    (auth.signOut as jest.Mock).mockResolvedValue(undefined);
+    signOutMock.mockResolvedValue(undefined);
 
     render(<Navbar />);
 
     const logoutButton = screen.getByRole("button", { name: /uitloggen/i });
-    fireEvent.click(logoutButton);
+    await act(async () => {
+      fireEvent.click(logoutButton);
+    });
 
-    expect(auth.signOut).toHaveBeenCalled();
+    expect(signOutMock).toHaveBeenCalled();
   });
 
-  it("shows mobile menu for logged in user and can log out", () => {
+  it("shows mobile menu for logged in user and can log out", async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { email: "test@user.com" },
       loading: false,
     });
-    (auth.signOut as jest.Mock).mockResolvedValue(undefined);
+    signOutMock.mockResolvedValue(undefined);
 
     render(<Navbar />);
 
@@ -103,8 +118,10 @@ describe("Navbar", () => {
     const logoutButtons = screen.getAllByRole("button", { name: /uitloggen/i });
     expect(logoutButtons.length).toBeGreaterThan(0);
 
-    fireEvent.click(logoutButtons[logoutButtons.length - 1]);
-    expect(auth.signOut).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(logoutButtons[logoutButtons.length - 1]);
+    });
+    expect(signOutMock).toHaveBeenCalled();
   });
 
   it("shows mobile menu for non-logged in user", () => {
@@ -124,30 +141,38 @@ describe("Navbar", () => {
     expect(registerLinks.length).toBeGreaterThan(0);
   });
 
-  it("logs error on logout and shows console.error", async () => {
+  it("logs error on logout and shows error message in UI", async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: { email: "test@user.com" },
       loading: false,
     });
-  
+
     const error = new Error("Fout bij uitloggen");
-    (auth.signOut as jest.Mock).mockRejectedValue(error);
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-  
+    signOutMock.mockRejectedValue(error);
+
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     render(<Navbar />);
-  
+
     const logoutButton = screen.getByRole("button", { name: /uitloggen/i });
-    fireEvent.click(logoutButton);
-  
-    await waitFor(() => {
-      expect(auth.signOut).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(logoutButton);
     });
-  
-    expect(consoleErrorSpy.mock.calls.some(call =>
-      call[0] === "Uitloggen mislukt:" && call[1] instanceof Error && call[1].message === "Fout bij uitloggen"
-    )).toBe(true);
-  
+
+    await waitFor(() => {
+      expect(signOutMock).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith("Logout failed:", error);
+    });
+
+    expect(
+      screen.getByText(
+        "Uitloggen mislukt. Probeer het opnieuw of ververs de pagina."
+      )
+    ).toBeInTheDocument();
+
     consoleErrorSpy.mockRestore();
   });
 });
