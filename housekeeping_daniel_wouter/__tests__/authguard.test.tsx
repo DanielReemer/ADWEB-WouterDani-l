@@ -1,7 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import AuthGuard from "@/components/authGuard";
+import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/context/AuthContext";
 import * as nextNavigation from "next/navigation";
 

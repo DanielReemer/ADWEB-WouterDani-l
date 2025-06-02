@@ -1,6 +1,6 @@
 'use client'
 
-import LoadingComponent from "@/components/loading"
+import LoadingComponent from "@/components/Loading"
 
 export default function Loading() {
     return <LoadingComponent />
