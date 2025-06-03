@@ -80,7 +80,7 @@ export default function TransactionItem({ transaction }: { transaction: Transact
           </select>
           <div className="flex gap-2">
             <button onClick={handleUpdate} className="bg-green-600 text-white px-3 py-1 rounded">
-              ✅ Opslaan
+              Opslaan
             </button>
             <button onClick={() => setIsEditing(false)} className="text-gray-600 hover:underline">
               Annuleer

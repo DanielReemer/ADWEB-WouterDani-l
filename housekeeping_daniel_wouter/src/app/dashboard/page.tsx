@@ -12,7 +12,10 @@ import TransactionForm from "./TransactionForm";
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedDate, setSelectedDate] = useState({
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -42,7 +45,7 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, []);
 
-  const filtered = filterTransactionsByMonth(transactions, selectedMonth);
+  const filtered = filterTransactionsByMonth(transactions, selectedDate.month, selectedDate.year);
 
   const income = filtered
     .filter((t) => t.type === "income")
@@ -65,7 +68,7 @@ export default function DashboardPage() {
                 className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={() => setShowForm((prev) => !prev)}
             >
-                {showForm ? "Annuleer" : "➕ Nieuwe transactie"}
+                {showForm ? "Annuleer" : "Nieuwe transactie"}
             </button>
           {showForm && (
             <TransactionForm
@@ -75,7 +78,11 @@ export default function DashboardPage() {
                 }}
             />
         )}
-          <MonthSelector selectedMonth={selectedMonth} onChange={setSelectedMonth} />
+          <MonthSelector
+            selectedMonth={selectedDate.month}
+            selectedYear={selectedDate.year}
+            onChange={setSelectedDate}
+          />
           <Statistics income={income} expense={expense} />
           <TransactionList transactions={filtered}/>
         </>
