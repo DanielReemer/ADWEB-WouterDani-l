@@ -1,5 +1,17 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import { AuthProvider } from "@/context/AuthContext";
+import Navbar from "@/components/navbar";
+import AuthGuard from "@/components/authguard";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Huishoudboekje",
@@ -13,10 +25,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="nl">
-      <body className="bg-gray-50 text-gray-800 min-h-screen">
-        <div className="max-w-2xl mx-auto p-6">
-          {children}
-        </div>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <AuthProvider>
+          <AuthGuard>
+            <Navbar />
+            <main>{children}</main>
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );
