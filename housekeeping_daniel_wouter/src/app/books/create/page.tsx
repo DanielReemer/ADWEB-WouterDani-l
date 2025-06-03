@@ -3,6 +3,7 @@ import { Book } from "@/lib/collections/Book";
 import { addBook } from "@/services/book.service";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Button from "@/components/button";
 
 interface BookFormData extends Omit<Book, "id" | "balance"> {
   errors?: {
@@ -56,16 +57,16 @@ export default function CreateBookPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-  
+
     const errors = validateForm(form);
     if (errors.name || errors.description) {
       setForm((prev) => ({ ...prev, errors }));
       setLoading(false);
       return;
     }
-  
+
     setForm((prev) => ({ ...prev, errors: undefined }));
-  
+
     addBook(form as Book)
       .then(() => {
         setForm(initialState);
@@ -170,15 +171,9 @@ export default function CreateBookPage() {
           </div>
         </div>
 
-        <button
-          type="submit"
-          className={`w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:cursor-pointer hover:to-sky-500 text-white font-semibold text-lg py-3 rounded-xl shadow-lg transition duration-150 ${
-            loading ? "opacity-60 cursor-not-allowed" : ""
-          }`}
-          disabled={loading}
-        >
-          {loading ? "Bezig..." : "Aanmaken"}
-        </button>
+        <Button type="submit" loading={loading}>
+          Aanmaken
+        </Button>
       </form>
     </section>
   );
