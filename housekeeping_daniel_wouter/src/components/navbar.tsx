@@ -132,6 +132,10 @@ export default function Navbar() {
             Home
           </Link>
 
+          <Link href="/books" className="block text-gray-700 hover:text-blue-600">
+            Boeken  
+          </Link>
+
           {!loading &&
             (user ? (
               <>
