@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "../../firebase";
+import { filterTransactionsByMonth } from "../../lib/filterTransactions";
 import MonthSelector from "./MonthSelector";
 import Statistics from "./Statistics";
 import TransactionList from "./TransactionList"
@@ -41,10 +42,7 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, []);
 
-  const filtered = transactions.filter((t) => {
-    const d = new Date(t.date.seconds * 1000);
-    return d.getMonth() === selectedMonth;
-  });
+  const filtered = filterTransactionsByMonth(transactions, selectedMonth);
 
   const income = filtered
     .filter((t) => t.type === "income")
