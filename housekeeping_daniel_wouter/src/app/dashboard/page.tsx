@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "../../lib/firebase";
 import { filterTransactionsByMonth } from "../../lib/filterTransactions";
 import MonthSelector from "./MonthSelector";
 import Statistics from "./Statistics";

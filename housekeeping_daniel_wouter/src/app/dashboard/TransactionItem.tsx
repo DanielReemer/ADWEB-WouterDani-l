@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "../../lib/firebase";
 
 interface Transaction {
   id: string;

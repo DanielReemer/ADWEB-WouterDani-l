@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import TransactionForm from "../src/app/dashboard/TransactionForm";
 import { addDoc, collection } from "firebase/firestore";
 
-jest.mock("../src/firebase", () => ({
+jest.mock("../src/lib/firebase", () => ({
   db: {},
 }));
 
@@ -11,7 +11,7 @@ jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),
 }));
 
-describe("TransactionForm - Happy Flow", () => {
+describe("TransactionForm - Happy Flow", () => { 
   it("slaat een geldige transactie op", async () => {
     const handleSave = jest.fn();
     const mockAddDoc = addDoc as jest.Mock;
