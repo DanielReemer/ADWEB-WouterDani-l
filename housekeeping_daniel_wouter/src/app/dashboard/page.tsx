@@ -9,9 +9,11 @@ import Statistics from "./Statistics";
 import TransactionList from "./TransactionList"
 import SkeletonTransactionList from "../ui/SkeletonTransactionList";
 import TransactionForm from "./TransactionForm";
+import Transaction from "@/lib/Transaction";
+
 
 export default function DashboardPage() {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedDate, setSelectedDate] = useState({
     month: new Date().getMonth(),
     year: new Date().getFullYear(),
@@ -19,7 +21,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
 
 
 
@@ -28,10 +29,16 @@ export default function DashboardPage() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const data = snapshot.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            description: d.description,
+            amount: d.amount,
+            type: d.type,
+            date: d.date,
+          } as Transaction;
+        });
         setTransactions(data);
         setLoading(false);
       },
@@ -74,8 +81,7 @@ export default function DashboardPage() {
             <TransactionForm
                 onSave={() => {
                 setShowForm(false);
-                setEditingTransaction(null);
-                }}
+                 }}
             />
         )}
           <MonthSelector

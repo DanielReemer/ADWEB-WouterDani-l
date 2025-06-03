@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addDoc, updateDoc, collection, Firestore } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 export default function TransactionForm({ onSave }: { onSave?: () => void }) {
