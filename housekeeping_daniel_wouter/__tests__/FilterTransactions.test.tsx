@@ -17,7 +17,7 @@ describe("filterTransactionsByMonth", () => {
       },
     ];
 
-    const result = filterTransactionsByMonth(transactions, 1); // Feb = 1 (0-indexed)
+    const result = filterTransactionsByMonth(transactions, 1, 2024); // Feb = 1 (0-indexed)
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("2");
   });
