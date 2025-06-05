@@ -1,4 +1,4 @@
-import { doc, onSnapshot, collection, addDoc } from "firebase/firestore"
+import { doc, onSnapshot, collection, addDoc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase";
 import { Book } from "@/lib/collections/Book";
 import { Unsubscribe } from "firebase/auth";
@@ -50,4 +50,11 @@ export async function addBook(book: Omit<Book, "id" | "balance">): Promise<void>
         name: book.name,
         description: book.description,
     })
+}
+
+export async function updateBook(id: string, book: Omit<Book, "id" | "balance">): Promise<void> {
+    await updateDoc(doc(db, "books", id), {
+        name: book.name,
+        description: book.description,
+    });
 }
