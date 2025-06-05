@@ -6,6 +6,7 @@ import { useLoading } from "@/lib/hooks/useLoading";
 import { listenToBook } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
 import Loading from "@/app/loading";
+import Link from "next/link";
 
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();
@@ -43,18 +44,17 @@ export default function BookPage() {
   }
 
   return (
-    <div className="w-full h-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+    <div className="w-full h-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
       <h2 className="text-3xl font-bold text-center text-blue-600 mb-2">
-        Huishoudboekje
+        {book.name}
       </h2>
-      <p className="text-center text-gray-500 mb-8">
-        Overzicht van &quot;{book?.name}&quot;
-      </p>
+      <Link
+        href={`/books/${book.id}/edit`}
+        className="max-w-fit px-4 self-center sm:self-start py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Bewerk dit boek
+      </Link>
       <div className="space-y-6">
-        <div>
-          <div className="text-sm text-gray-500 mb-1">Naam</div>
-          <div className="font-semibold text-blue-800 text-lg">{book.name}</div>
-        </div>
         {book.description && (
           <div>
             <div className="text-sm text-gray-500 mb-1">Beschrijving</div>
