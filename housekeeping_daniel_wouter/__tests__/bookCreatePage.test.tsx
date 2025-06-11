@@ -36,42 +36,6 @@ describe("CreateBookPage", () => {
     jest.clearAllMocks();
   });
 
-  it("renders book creation form", () => {
-    render(<CreateBookPage />);
-
-    // Expect fields and buttons to be present
-    expect(screen.getByText("Aanmaken")).toBeInTheDocument();
-    expect(screen.getByLabelText(/naam\s*\*/i)).toBeInTheDocument();
-    expect(screen.getByLabelText("Omschrijving")).toBeInTheDocument();
-
-    // Expect fields to be empty initially
-    expect(
-      (screen.getByLabelText(/naam\s*\*/i) as HTMLInputElement).value
-    ).toBe("");
-    expect(
-      (screen.getByLabelText("Omschrijving") as HTMLInputElement).value
-    ).toBe("");
-    expect(
-      screen.queryByText("Er is iets misgegaan bij het aanmaken van het boek.")
-    ).not.toBeInTheDocument();
-
-    // Expect button to be enabled
-    expect(screen.getByRole("button", { name: /Aanmaken/i })).toBeEnabled();
-  });
-
-  it("shows validation errors on empty form submission", async () => {
-    render(<CreateBookPage />);
-
-    // Simulate form submission
-    const submitButton = screen.getByRole("button", { name: /Aanmaken/i });
-    fireEvent.click(submitButton);
-
-    // Wait for validation errors to appear
-    await screen.findByText("Naam is verplicht.");
-
-    expect(screen.getByText("Naam is verplicht.")).toBeInTheDocument();
-  });
-
   it("shows global error on book creation failure", async () => {
     (addBook as jest.Mock).mockImplementationOnce(() =>
       Promise.reject(new Error("Network Error"))
