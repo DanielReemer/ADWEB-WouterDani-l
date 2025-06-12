@@ -89,6 +89,7 @@ export default function EditBookPage() {
 
       <div className="flex justify-center bg-white rounded rounded-3xl shadow-2xl max-w-xl p-5 w-full mt-4">
         <button
+          type="button"
           onClick={handleArchive}
           disabled={archiving || loading}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer disabled:opacity-50"

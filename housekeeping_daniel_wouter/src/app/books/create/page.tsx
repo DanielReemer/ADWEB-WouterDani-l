@@ -17,6 +17,7 @@ export default function CreateBookPage() {
   };
 
   const handleCreate = (data: BookFormData) => {
+    setGlobalError(undefined);
     setLoading(true);
     addBook(data)
       .then(() => {
