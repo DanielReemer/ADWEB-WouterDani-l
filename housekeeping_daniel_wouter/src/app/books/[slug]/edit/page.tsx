@@ -77,22 +77,25 @@ export default function EditBookPage() {
   };
 
   return (
-    <section className="flex w-full flex-col items-center p-6 space-y-6">
+    <section className="flex w-full bg-blue-300 rounded rounded-3xl shadow-2xl max-w-2xl flex-col items-center p-6 space-y-6">
       <BookForm
         initialData={initialForm}
         onSubmit={handleUpdate}
         submitButtonLabel="Opslaan"
+        formHeading="Boek Bewerken"
         loading={loading}
         globalError={globalError}
       />
 
-      <button
-        onClick={handleArchive}
-        disabled={archiving || loading}
-        className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer disabled:opacity-50"
-      >
-        {archiving ? "Archiveren..." : "Archiveren"}
-      </button>
+      <div className="flex justify-center bg-white rounded rounded-3xl shadow-2xl max-w-xl p-5 w-full mt-4">
+        <button
+          onClick={handleArchive}
+          disabled={archiving || loading}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer disabled:opacity-50"
+        >
+          {archiving ? "Archiveren..." : "Archiveren"}
+        </button>
+      </div>
     </section>
   );
 }

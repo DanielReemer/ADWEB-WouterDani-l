@@ -14,6 +14,7 @@ interface BookFormProps {
   initialData: BookFormData;
   onSubmit: (data: BookFormData) => void;
   submitButtonLabel?: string;
+  formHeading?: string;
   loading?: boolean;
   globalError?: string;
 }
@@ -22,6 +23,7 @@ export default function BookForm({
   initialData,
   onSubmit,
   submitButtonLabel = "Opslaan",
+  formHeading = "Boek Formulier",
   loading = false,
   globalError,
 }: BookFormProps) {
@@ -76,7 +78,7 @@ export default function BookForm({
       }}
     >
       <h1 className="text-3xl font-extrabold text-center text-blue-600 mb-8 tracking-tight">
-        Boek Bewerken
+        {formHeading}
       </h1>
 
       {globalError && (
@@ -130,7 +132,7 @@ export default function BookForm({
           value={form.description}
           onChange={handleChange}
           rows={4}
-          maxLength={500}
+          maxLength={200}
           disabled={loading}
         />
         <div className="flex justify-between text-xs mt-1">
@@ -142,7 +144,7 @@ export default function BookForm({
             {form.errors?.description || ""}
           </span>
           <span className="text-gray-300">
-            {form.description?.length || 0}/500
+            {form.description?.length || 0}/200
           </span>
         </div>
       </div>

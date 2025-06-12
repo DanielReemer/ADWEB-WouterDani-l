@@ -30,11 +30,12 @@ export default function CreateBookPage() {
   };
 
   return (
-    <section className="flex w-full justify-center p-6">
+    <section className="flex w-full bg-blue-300 rounded rounded-3xl shadow-2xl max-w-2xl flex-col items-center p-6 space-y-6">
       <BookForm
         initialData={initialForm}
         onSubmit={handleCreate}
         submitButtonLabel="Aanmaken"
+        formHeading="Nieuw Boek Aanmaken"
         loading={loading}
         globalError={globalError}
       />
