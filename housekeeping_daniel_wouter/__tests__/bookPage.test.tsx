@@ -8,6 +8,9 @@ jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
+jest.mock("@/services/book.service", () => ({
+  listenToBooks: jest.fn(),
+}));
 
 describe("BookPage", () => {
   it("renders the heading", () => {
@@ -34,5 +37,12 @@ describe("BookPage", () => {
   it("renders the BookList component", () => {
     render(<BookPage />);
     expect(screen.getByText("BookListMock")).toBeInTheDocument();
+  });
+
+  it("renders the archive link", () => {
+    render(<BookPage />);
+    const link = screen.getByRole("link", { name: /archief bekijken/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/books/archive");
   });
 });

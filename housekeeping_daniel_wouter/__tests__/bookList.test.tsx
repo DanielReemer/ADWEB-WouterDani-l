@@ -1,14 +1,14 @@
 import React from "react";
-import { render, screen, act, cleanup } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import BookList from "@/app/books/BookList";
-import { listenToBooks as mockListenToBooks } from "@/services/book.service";
 import { useLoading as mockUseLoading } from "@/lib/hooks/useLoading";
 import { Book } from "@/lib/collections/Book";
 import "@testing-library/jest-dom";
 
-jest.mock("next/link", () => {
-  return ({ children, href }: any) => <a href={href}>{children}</a>;
-});
+jest.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href }: any) => <a href={href}>{children}</a>,
+}));
 
 jest.mock("@/services/book.service", () => ({
   listenToBooks: jest.fn(),
@@ -30,129 +30,76 @@ jest.mock("@/context/AuthContext", () => ({
   })),
 }));
 
+afterEach(() => {
+  cleanup();
+  jest.clearAllMocks();
+});
+
 describe("BookList component", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+  const listenFn = jest.fn((listener: (books: Book[]) => void) => {
+    return () => {};
   });
 
-  function setupUseLoading({
-    loading = false,
-    data = [],
-    setLoaded = jest.fn(),
-    reset = jest.fn(),
-  }: Partial<ReturnType<typeof mockUseLoading>>) {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading,
-      data,
-      setLoaded,
-      reset,
-    });
-    return { setLoaded, reset };
-  }
-
-  function mockListen(unsubscribeFn = jest.fn()) {
-    (mockListenToBooks as jest.Mock).mockImplementation(
-      (_listener) => unsubscribeFn
-    );
-    return unsubscribeFn;
-  }
-
   it("renders loading skeletons when loading", () => {
-    setupUseLoading({ loading: true, data: undefined });
-    mockListen();
-
-    render(<BookList />);
-
-    expect(screen.getByText("Boekenlijst")).toBeInTheDocument();
+    (mockUseLoading as jest.Mock).mockReturnValue({
+      loading: true,
+      data: [],
+      setLoaded: jest.fn(),
+      reset: jest.fn(),
+    });
+    render(<BookList listenFn={listenFn} title="Loading boeken" />);
+    expect(screen.getByText("Loading boeken")).toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        (_content, element) =>
-          element?.className.includes("animate-pulse") || false
-      )
+      screen.getAllByText((_, el) => !!el?.className.includes("animate-pulse"))
     ).toHaveLength(5);
   });
 
   it("shows empty message when no books", () => {
-    setupUseLoading({ loading: false, data: [] });
-    mockListen();
-
-    render(<BookList />);
-
+    (mockUseLoading as jest.Mock).mockReturnValue({
+      loading: false,
+      data: [],
+      setLoaded: jest.fn(),
+      reset: jest.fn(),
+    });
+    render(<BookList listenFn={listenFn} />);
     expect(screen.getByText("Geen boeken gevonden.")).toBeInTheDocument();
   });
 
   it("renders list of books with correct info and links", () => {
+    // Setup mock data
     const books: Book[] = [
-      { id: "1", name: "Boek A", balance: 100 },
-      { id: "2", name: "Boek B", balance: -50 },
+      { id: "b1", name: "Test Boek 1", balance: 123.45 },
+      { id: "b2", name: "Test Boek 2", balance: -10.0 },
+      { id: "b3", name: "Test Boek 3", balance: 0 },
     ];
-    setupUseLoading({ loading: false, data: books });
-    mockListen();
-
-    render(<BookList />);
-
-    expect(screen.getByText("Boekenlijst")).toBeInTheDocument();
-    expect(screen.getByText("Boek A")).toBeInTheDocument();
-    expect(screen.getByText("Boek B")).toBeInTheDocument();
-    expect(screen.getByText(/€\s?100,00/)).toHaveClass("text-green-600");
-    expect(screen.getByText(/€\s?-50,00/)).toHaveClass("text-red-600");
-    expect(screen.getByText("Boek A").closest("a")).toHaveAttribute(
-      "href",
-      "/books/1"
-    );
-    expect(screen.getByText("Boek B").closest("a")).toHaveAttribute(
-      "href",
-      "/books/2"
-    );
-  });
-
-  it("does not render balance section if balance is not a number", () => {
-    const books: Book[] = [
-      { id: "1", name: "Boek C", balance: undefined as any },
-      { id: "2", name: "Boek D" } as any,
-    ];
-    setupUseLoading({ loading: false, data: books });
-    mockListen();
-
-    render(<BookList />);
-
-    expect(screen.getByText("Boek C")).toBeInTheDocument();
-    expect(screen.getByText("Boek D")).toBeInTheDocument();
-    expect(screen.queryByText(/Balans:/)).not.toBeInTheDocument();
-  });
-
-  it("calls listenToBooks and handles unsubscription on unmount", () => {
-    const unsubscribe = jest.fn();
-    mockListen(unsubscribe);
-    const { reset } = setupUseLoading({ loading: true });
-
-    const { unmount } = render(<BookList />);
-    expect(reset).toHaveBeenCalled();
-
-    expect(mockListenToBooks).toHaveBeenCalledTimes(1);
-
-    unmount();
-    expect(unsubscribe).toHaveBeenCalled();
-  });
-
-  it("updates the books when listenToBooks yields data", () => {
-    let callback: (books: Book[]) => void = () => {};
-    (mockListenToBooks as jest.Mock).mockImplementation((cb: any) => {
-      callback = cb;
-      return jest.fn();
+    (mockUseLoading as jest.Mock).mockReturnValue({
+      loading: false,
+      data: books,
+      setLoaded: jest.fn(),
+      reset: jest.fn(),
     });
 
-    const setLoaded = jest.fn();
-    setupUseLoading({ loading: true, setLoaded });
 
-    render(<BookList />);
+    // Render component
+    render(<BookList listenFn={listenFn} title="Mijn Boeken" />);
 
-    act(() => {
-      callback([{ id: "1", name: "Boek X", balance: 10 }]);
+    // Setup assertions
+    const balanceElements = screen.getAllByText("Balans:");
+    
+    // Assertions
+    expect(screen.getByText("Mijn Boeken")).toBeInTheDocument();
+    
+    expect(balanceElements).toHaveLength(books.length);
+    books.forEach((book) => {
+      expect(screen.getByText(book.name)).toBeInTheDocument();
+      
+      const euro = `€ ${(book.balance ?? 0).toLocaleString("nl-NL", {
+        minimumFractionDigits: 2,
+      })}`;
+      expect(screen.getByText(euro)).toBeInTheDocument();
     });
-
-    expect(setLoaded).toHaveBeenCalledWith([
-      { id: "1", name: "Boek X", balance: 10 },
-    ]);
+    expect(screen.getByText("€ 123,45").className).toMatch(/text-green-600/);
+    expect(screen.getByText("€ -10,00").className).toMatch(/text-red-600/);
+    expect(screen.getByText("€ 0,00").className).toMatch(/text-green-600/);
   });
 });

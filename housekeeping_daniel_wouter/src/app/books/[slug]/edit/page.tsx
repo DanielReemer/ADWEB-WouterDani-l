@@ -1,4 +1,3 @@
-// app/books/[id]/edit/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import BookForm, { BookFormData } from "@/app/books/BookForm";
 import { Book } from "@/lib/collections/Book";
 import { listenToBook, updateBook } from "@/services/book.service";
+import { archiveBook } from "@/services/book.service";
 import Loading from "@/app/loading";
 
 export default function EditBookPage() {
@@ -14,6 +14,7 @@ export default function EditBookPage() {
 
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [globalError, setGlobalError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -32,20 +33,33 @@ export default function EditBookPage() {
     if (!book) return;
     setLoading(true);
 
-    updateBook(book.id, {
-      name: data.name,
-      description: data.description,
-    })
-      .then(() => {
-        router.push(`/books/${book.id}`);
-      })
-      .catch((err) => {
-        console.error(err);
-        setGlobalError("Kon het boek niet updaten.");
-      })
-      .finally(() => {
-        setLoading(false);
+    try {
+      await updateBook(book.id, {
+        name: data.name,
+        description: data.description,
       });
+      router.push(`/books/${book.id}`);
+    } catch (err) {
+      console.error(err);
+      setGlobalError("Kon het boek niet updaten.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!book) return;
+    setArchiving(true);
+    setGlobalError(undefined);
+    try {
+      await archiveBook(book.id);
+      router.push("/books");
+    } catch (err) {
+      console.error(err);
+      setGlobalError("Kon het boek niet archiveren.");
+    } finally {
+      setArchiving(false);
+    }
   };
 
   if (!book) {
@@ -63,7 +77,7 @@ export default function EditBookPage() {
   };
 
   return (
-    <section className="flex w-full justify-center p-6">
+    <section className="flex w-full flex-col items-center p-6 space-y-6">
       <BookForm
         initialData={initialForm}
         onSubmit={handleUpdate}
@@ -71,6 +85,14 @@ export default function EditBookPage() {
         loading={loading}
         globalError={globalError}
       />
+
+      <button
+        onClick={handleArchive}
+        disabled={archiving || loading}
+        className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer disabled:opacity-50"
+      >
+        {archiving ? "Archiveren..." : "Archiveren"}
+      </button>
     </section>
   );
 }
