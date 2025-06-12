@@ -35,7 +35,7 @@ export function listenToBook(
 }
 
 export function listenToBooks(listener: (books: Book[]) => void): Unsubscribe {
-  let unsubscribe = onSnapshot(collection(db, "books"), (snapshot) => {
+  const unsubscribe = onSnapshot(collection(db, "books"), (snapshot) => {
     const books: Book[] = [];
 
     snapshot.forEach((doc) => {
@@ -94,7 +94,7 @@ export async function deleteArchivedBook(id: string): Promise<void> {
 export function listenToArchivedBooks(
   listener: (books: Book[]) => void
 ): Unsubscribe {
-  let unsubscribe = onSnapshot(collection(db, "archivedBooks"), (snapshot) => {
+  const unsubscribe = onSnapshot(collection(db, "archivedBooks"), (snapshot) => {
     const books: Book[] = [];
 
     snapshot.forEach((doc) => {

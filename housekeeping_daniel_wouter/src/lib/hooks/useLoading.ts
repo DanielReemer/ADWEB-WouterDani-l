@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-export function useLoading<T = any>() {
+export function useLoading<T = unknown>() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<T | undefined>(undefined);
 
