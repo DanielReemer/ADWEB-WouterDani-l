@@ -14,13 +14,6 @@ jest.mock("@/services/book.service", () => ({
   addBook: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock("@/components/AuthGuard", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
 describe("CreateBookPage", () => {
   let consoleErrorSpy: jest.SpyInstance;
 
