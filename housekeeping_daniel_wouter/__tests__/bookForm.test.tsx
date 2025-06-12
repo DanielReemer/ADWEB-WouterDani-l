@@ -125,8 +125,8 @@ describe("BookForm", () => {
       />
     );
     const textarea = screen.getByRole("textbox", { name: /omschrijving/i });
-    expect(screen.getByText("0/500")).toBeInTheDocument();
+    expect(screen.getByText("0/200")).toBeInTheDocument();
     fireEvent.change(textarea, { target: { value: "1234" } });
-    expect(screen.getByText("4/500")).toBeInTheDocument();
+    expect(screen.getByText("4/200")).toBeInTheDocument();
   });
 });
