@@ -19,7 +19,7 @@ export default function BookList({ listenFn, userId, title, children }: BookList
       setLoaded(books);
     });
     return () => unsubscribe();
-  }, [listenFn, setLoaded, reset]);
+  }, [listenFn, setLoaded, reset, userId]);
 
   if (loading) {
     return (

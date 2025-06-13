@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import BookForm, { BookFormData } from "@/app/books/BookForm";
 import { Book } from "@/lib/collections/Book";
 import { listenToBook, updateBook } from "@/services/book.service";
-import { archiveBook } from "@/services/book.service";
+import { archiveBook } from "@/services/bookArchive.service";
 import Loading from "@/app/loading";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
@@ -29,7 +29,7 @@ export default function EditBookPage() {
       }
     });
     return () => unsubscribe();
-  }, [slug]);
+  }, [slug, user.uid]);
 
   const handleUpdate = async (data: BookFormData) => {
     if (!book) return;

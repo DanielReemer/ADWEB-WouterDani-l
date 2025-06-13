@@ -1,7 +1,8 @@
 "use client";
 import BookList from "@/app/books/BookList";
 import Link from "next/link";
-import { listenToArchivedBooks, restoreBook } from "@/services/book.service";
+import { listenToArchivedBooks } from "@/services/archivedBook.service";
+import { restoreBook } from "@/services/bookArchive.service";
 import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 

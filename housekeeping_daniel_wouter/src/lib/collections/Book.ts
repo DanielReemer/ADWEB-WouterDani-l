@@ -6,3 +6,7 @@ export interface Book extends DocumentData {
     balance?: number;
     description?: string;
 }
+
+export interface ArchivedBook extends Book {
+    archivedAt: Date;
+}

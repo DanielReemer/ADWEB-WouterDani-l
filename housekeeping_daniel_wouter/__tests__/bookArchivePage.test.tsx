@@ -2,7 +2,8 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import ArchivedBooksPage from "@/app/books/archive/page";
 import "@testing-library/jest-dom";
-import { listenToArchivedBooks, restoreBook } from "@/services/book.service";
+import { listenToArchivedBooks } from "@/services/archivedBook.service";
+import { restoreBook } from "@/services/bookArchive.service";
 
 const TEST_USER_ID = "test-user-id";
 
@@ -24,9 +25,18 @@ jest.mock("next/link", () => ({
   default: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
-jest.mock("@/services/book.service", () => ({
-  listenToArchivedBooks: jest.fn(),
-  restoreBook: jest.fn(),
+jest.mock("@/services/bookArchive.service", () => ({
+  restoreBook: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock("@/services/archivedBook.service", () => ({
+  listenToArchivedBooks: jest.fn(() => (callback: any) => {
+    callback([
+      { id: "1", name: "Test Book", balance: 42 },
+      { id: "2", name: "Another Book", balance: 100 },
+    ]);
+    return () => {};
+  }),
 }));
 
 jest.mock("@/lib/hooks/useRequireUser", () => ({
