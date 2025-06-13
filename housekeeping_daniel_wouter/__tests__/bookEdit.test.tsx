@@ -19,6 +19,9 @@ jest.mock("@/services/book.service", () => ({
 }));
 
 jest.mock("@/app/loading", () => () => <div>LoadingMock</div>);
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: () => ({ uid: "test-user-id" }),
+}));
 
 describe("EditBookPage", () => {
   let consoleErrorSpy: jest.SpyInstance;
@@ -49,7 +52,7 @@ describe("EditBookPage", () => {
   });
 
   it("renders error if book not found", () => {
-    (listenToBook as jest.Mock).mockImplementation((_slug, callback) => {
+    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
       callback(undefined);
       return () => {};
     });
@@ -58,7 +61,7 @@ describe("EditBookPage", () => {
   });
 
   it("renders BookForm with initial book data and submits update", async () => {
-    (listenToBook as jest.Mock).mockImplementation((_slug, callback) => {
+    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
       callback(testBook);
       return () => {};
     });
@@ -77,7 +80,7 @@ describe("EditBookPage", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(updateBook).toHaveBeenCalledWith("book-123", {
+      expect(updateBook).toHaveBeenCalledWith("test-user-id", "book-123", {
         name: "Aangepast Boek",
         description: "Nieuwe beschrijving",
       });
@@ -86,7 +89,7 @@ describe("EditBookPage", () => {
   });
 
   it("shows global error if updateBook fails", async () => {
-    (listenToBook as jest.Mock).mockImplementation((_slug, callback) => {
+    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
       callback(testBook);
       return () => {};
     });

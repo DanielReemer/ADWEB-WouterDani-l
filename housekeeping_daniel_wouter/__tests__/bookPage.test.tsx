@@ -11,6 +11,9 @@ jest.mock("next/link", () => ({
 jest.mock("@/services/book.service", () => ({
   listenToBooks: jest.fn(),
 }));
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: () => ({ uid: "test-user-id" }),
+}));
 
 describe("BookPage", () => {
   it("renders the heading", () => {
