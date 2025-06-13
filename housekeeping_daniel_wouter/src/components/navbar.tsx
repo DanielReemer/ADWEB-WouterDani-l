@@ -28,7 +28,7 @@ export default function Navbar() {
   if (loading) return <Loading />;
 
   return (
-    <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
+    <header className="bg-white shadow-md sticky top-0 left-0 w-full z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-gray-800">
           HuishoudBalans
@@ -40,6 +40,13 @@ export default function Navbar() {
             className="text-gray-700 hover:text-blue-600 transition"
           >
             Home
+          </Link>
+
+          <Link
+            href="/books"
+            className="text-gray-700 hover:text-blue-600 transition"
+          >
+            Boeken
           </Link>
 
           {!loading &&
@@ -123,6 +130,13 @@ export default function Navbar() {
         <div className="md:hidden bg-white shadow-md px-4 pt-2 pb-4 space-y-2">
           <Link href="/" className="block text-gray-700 hover:text-blue-600">
             Home
+          </Link>
+
+          <Link
+            href="/books"
+            className="block text-gray-700 hover:text-blue-600"
+          >
+            Boeken
           </Link>
 
           {!loading &&
