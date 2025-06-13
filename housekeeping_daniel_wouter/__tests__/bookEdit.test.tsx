@@ -14,8 +14,12 @@ jest.mock("next/navigation", () => ({
 }));
 
 jest.mock("@/services/book.service", () => ({
-  updateBook: jest.fn(() => Promise.resolve()),
   listenToBook: jest.fn(),
+  updateBook: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock("@/services/bookArchive.service", () => ({
+  archiveBook: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock("@/app/loading", () => () => <div>LoadingMock</div>);
@@ -65,6 +69,7 @@ describe("EditBookPage", () => {
       callback(testBook);
       return () => {};
     });
+    (updateBook as jest.Mock).mockImplementation((_userId, _id, _book) => Promise.resolve());
     render(<EditBookPage />);
     const nameInput = screen.getByLabelText(/naam\s*\*/i);
     const descriptionInput = screen.getByLabelText("Omschrijving");
