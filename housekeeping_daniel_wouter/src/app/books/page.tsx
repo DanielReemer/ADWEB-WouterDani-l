@@ -3,8 +3,10 @@ import BookList from "./BookList";
 import Link from "next/link";
 import { listenToBooks } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
 export default function BookPage() {
+  const user = useRequireUser();
   return (
     <section className="w-full h-full max-w-3xl flex flex-col justify-center items-center gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
       <div className="flex items-center w-full">
@@ -32,7 +34,7 @@ export default function BookPage() {
         </Link>
       </div>
 
-      <BookList listenFn={listenToBooks} title="Actieve boeken">
+      <BookList listenFn={listenToBooks} userId={user.uid} title="Actieve boeken">
         {(book: Book) => (
           <Link
           key={book.id}

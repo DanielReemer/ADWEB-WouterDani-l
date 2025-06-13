@@ -4,17 +4,18 @@ import { useEffect } from "react";
 import { useLoading } from "@/lib/hooks/useLoading";
 
 interface BookListProps {
-  listenFn: (listener: (books: Book[]) => void) => () => void;
+  listenFn: (userId: string, listener: (books: Book[]) => void) => () => void;
+  userId: string;
   title?: string;
   children?: (book: Book) => React.ReactNode;
 }
 
-export default function BookList({ listenFn, title, children }: BookListProps) {
+export default function BookList({ listenFn, userId, title, children }: BookListProps) {
   const { loading, data: books, setLoaded, reset } = useLoading<Book[]>();
 
   useEffect(() => {
     reset();
-    const unsubscribe = listenFn((books: Book[]) => {
+    const unsubscribe = listenFn(userId, (books: Book[]) => {
       setLoaded(books);
     });
     return () => unsubscribe();

@@ -3,11 +3,13 @@ import BookList from "@/app/books/BookList";
 import Link from "next/link";
 import { listenToArchivedBooks, restoreBook } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
 export default function ArchivedBooksPage() {
+  const user = useRequireUser();
   async function handleRestore(book: Book) {
     try {
-      await restoreBook(book.id);
+      await restoreBook(user.uid, book.id);
     } catch (error) {
       console.error(error);
     }
@@ -31,7 +33,7 @@ export default function ArchivedBooksPage() {
         Terug naar actieve boeken
       </Link>
 
-      <BookList listenFn={listenToArchivedBooks} title="Gearchiveerde boekjes">
+      <BookList listenFn={listenToArchivedBooks} userId={user.uid} title="Gearchiveerde boekjes">
         {(book) => (
           <>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-4 rounded-lg shadow-2xl bg-gradient-to-r from-sky-400 to-blue-50 hover:from-sky-500 hover:to-blue-600 transition">

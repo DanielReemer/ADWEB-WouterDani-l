@@ -7,16 +7,26 @@ import {
   deleteDoc,
   writeBatch,
   getDoc,
+  CollectionReference,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Book } from "@/lib/collections/Book";
 import { Unsubscribe } from "firebase/auth";
 
+// Helper to get user's books collection
+function userBooksCollection(userId: string) {
+  return collection(db, "users", userId, "books");
+}
+function userArchivedBooksCollection(userId: string) {
+  return collection(db, "users", userId, "archivedBooks");
+}
+
 export function listenToBook(
+  userId: string,
   id: string,
   listener: (book: Book | undefined) => void
 ): Unsubscribe {
-  const unsubscribe = onSnapshot(doc(db, "books", id), (doc) => {
+  const unsubscribe = onSnapshot(doc(db, "users", userId, "books", id), (doc) => {
     const data = doc.data();
     let res = undefined;
     if (data) {
@@ -27,20 +37,17 @@ export function listenToBook(
         balance: data.balance || 0,
       };
     }
-
     listener(res);
   });
 
   return unsubscribe;
 }
 
-export function listenToBooks(listener: (books: Book[]) => void): Unsubscribe {
-  const unsubscribe = onSnapshot(collection(db, "books"), (snapshot) => {
+export function listenToBooks(userId: string, listener: (books: Book[]) => void): Unsubscribe {
+  const unsubscribe = onSnapshot(userBooksCollection(userId), (snapshot) => {
     const books: Book[] = [];
-
     snapshot.forEach((doc) => {
       const data = doc.data();
-
       if (data) {
         books.push({
           id: doc.id,
@@ -50,15 +57,14 @@ export function listenToBooks(listener: (books: Book[]) => void): Unsubscribe {
         });
       }
     });
-
     listener(books);
   });
 
   return unsubscribe;
 }
 
-export async function addBook(book: Omit<Book, "id">): Promise<void> {
-  await addDoc(collection(db, "books"), {
+export async function addBook(userId: string, book: Omit<Book, "id">): Promise<void> {
+  await addDoc(userBooksCollection(userId), {
     name: book.name,
     description: book.description,
     balance: book.balance || 0,
@@ -66,40 +72,40 @@ export async function addBook(book: Omit<Book, "id">): Promise<void> {
 }
 
 export async function updateBook(
+  userId: string,
   id: string,
   book: Omit<Book, "id" | "balance">
 ): Promise<void> {
-  await updateDoc(doc(db, "books", id), {
+  await updateDoc(doc(db, "users", userId, "books", id), {
     name: book.name,
     description: book.description,
   });
 }
 
-export async function deleteBook(id: string): Promise<void> {
-  await deleteDoc(doc(db, "books", id));
+export async function deleteBook(userId: string, id: string): Promise<void> {
+  await deleteDoc(doc(db, "users", userId, "books", id));
 }
 
-export async function addArchivedBook(book: Book): Promise<void> {
-  await addDoc(collection(db, "archivedBooks"), {
+export async function addArchivedBook(userId: string, book: Book): Promise<void> {
+  await addDoc(userArchivedBooksCollection(userId), {
     name: book.name,
     description: book.description,
     balance: book.balance || 0,
   });
 }
 
-export async function deleteArchivedBook(id: string): Promise<void> {
-  await deleteDoc(doc(db, "archivedBooks", id));
+export async function deleteArchivedBook(userId: string, id: string): Promise<void> {
+  await deleteDoc(doc(db, "users", userId, "archivedBooks", id));
 }
 
 export function listenToArchivedBooks(
+  userId: string,
   listener: (books: Book[]) => void
 ): Unsubscribe {
-  const unsubscribe = onSnapshot(collection(db, "archivedBooks"), (snapshot) => {
+  const unsubscribe = onSnapshot(userArchivedBooksCollection(userId), (snapshot) => {
     const books: Book[] = [];
-
     snapshot.forEach((doc) => {
       const data = doc.data();
-
       if (data) {
         books.push({
           id: doc.id,
@@ -109,7 +115,6 @@ export function listenToArchivedBooks(
         });
       }
     });
-
     listener(books);
   });
 
@@ -117,10 +122,11 @@ export function listenToArchivedBooks(
 }
 
 export function listenToArchivedBook(
+  userId: string,
   id: string,
   listener: (book: Book | undefined) => void
 ): Unsubscribe {
-  const unsubscribe = onSnapshot(doc(db, "archivedBooks", id), (doc) => {
+  const unsubscribe = onSnapshot(doc(db, "users", userId, "archivedBooks", id), (doc) => {
     const data = doc.data();
     let res = undefined;
     if (data) {
@@ -131,16 +137,15 @@ export function listenToArchivedBook(
         balance: data.balance || 0,
       };
     }
-
     listener(res);
   });
 
   return unsubscribe;
 }
 
-export async function archiveBook(id: string): Promise<void> {
-  const bookRef = doc(db, "books", id);
-  const archivedRef = doc(db, "archivedBooks", id);
+export async function archiveBook(userId: string, id: string): Promise<void> {
+  const bookRef = doc(db, "users", userId, "books", id);
+  const archivedRef = doc(db, "users", userId, "archivedBooks", id);
 
   const bookSnap = await getDoc(bookRef);
   if (!bookSnap.exists()) {
@@ -159,9 +164,9 @@ export async function archiveBook(id: string): Promise<void> {
   await batch.commit();
 }
 
-export async function restoreBook(id: string): Promise<void> {
-  const archivedRef = doc(db, "archivedBooks", id);
-  const bookRef = doc(db, "books", id);
+export async function restoreBook(userId: string, id: string): Promise<void> {
+  const archivedRef = doc(db, "users", userId, "archivedBooks", id);
+  const bookRef = doc(db, "users", userId, "books", id);
 
   const archivedSnap = await getDoc(archivedRef);
   if (!archivedSnap.exists()) {

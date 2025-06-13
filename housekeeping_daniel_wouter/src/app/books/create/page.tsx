@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BookForm, { BookFormData } from "@/app/books/BookForm";
 import { addBook } from "@/services/book.service";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
 export default function CreateBookPage() {
   const [loading, setLoading] = useState(false);
   const [globalError, setGlobalError] = useState<string | undefined>(undefined);
   const router = useRouter();
+  const user = useRequireUser();
+
 
   const initialForm: BookFormData = {
     name: "",
@@ -19,7 +22,7 @@ export default function CreateBookPage() {
   const handleCreate = (data: BookFormData) => {
     setGlobalError(undefined);
     setLoading(true);
-    addBook(data)
+    addBook(user.uid, data)
       .then(() => {
         router.push("/books");
       })

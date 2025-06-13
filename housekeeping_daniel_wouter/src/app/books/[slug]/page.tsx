@@ -7,22 +7,23 @@ import { listenToBook } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
 import Loading from "@/app/loading";
 import Link from "next/link";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();
-  const slug = useParams<{ slug: string }>().slug;
+  const { slug } = useParams<{ slug: string }>();
+  const user = useRequireUser();
 
   useEffect(() => {
     reset();
-    const unsubscribe = listenToBook(slug, (book: Book | undefined) => {
-      console.log("Book data received:", book);
+    const unsubscribe = listenToBook(user.uid, slug, (book: Book | undefined) => {
       setLoaded(book);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [slug, setLoaded, reset]);
+  }, [user.uid, slug, setLoaded, reset]);
 
   if (loading) {
     return <Loading />;
