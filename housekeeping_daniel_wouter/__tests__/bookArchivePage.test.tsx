@@ -1,24 +1,21 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import ArchivedBooksPage from "@/app/books/archive/page";
 import "@testing-library/jest-dom";
-import { listenToArchivedBooks } from "@/services/archivedBook.service";
+import "@testing-library/react";
 import { restoreBook } from "@/services/bookArchive.service";
 
 const TEST_USER_ID = "test-user-id";
 
-jest.mock(
-  "@/app/books/BookList",
-  () =>
-    ({ listenFn, title, children }: any) =>
-      (
-        <div>
-          <div data-testid="booklist-title">{title}</div>
-          {typeof children === "function" &&
-            children({ id: "1", name: "Test Book", balance: 42 })}
-        </div>
-      )
-);
+jest.mock("@/app/books/BookList", () => ({
+  __esModule: true,
+  default: ({ listenFn, title, children }: any) => (
+    <div>
+      <div data-testid="booklist-title">{title}</div>
+      {typeof children === "function" &&
+        children({ id: "1", name: "Test Book", balance: 42 })}
+    </div>
+  ),
+}));
 
 jest.mock("next/link", () => ({
   __esModule: true,
@@ -58,20 +55,26 @@ describe("ArchivedBooksPage", () => {
       screen.getByRole("heading", { name: /Gearchiveerde boekjes/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Hier zie je alle huishoudboekjes die je hebt gearchiveerd/i)
+      screen.getByText(
+        /Hier zie je alle huishoudboekjes die je hebt gearchiveerd/i
+      )
     ).toBeInTheDocument();
   });
 
   it("renders the back link", () => {
     renderPage();
-    const link = screen.getByRole("link", { name: /Terug naar actieve boeken/i });
+    const link = screen.getByRole("link", {
+      name: /Terug naar actieve boeken/i,
+    });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/books");
   });
 
   it("renders BookList with correct props", () => {
     renderPage();
-    expect(screen.getByTestId("booklist-title")).toHaveTextContent("Gearchiveerde boekjes");
+    expect(screen.getByTestId("booklist-title")).toHaveTextContent(
+      "Gearchiveerde boekjes"
+    );
   });
 
   it("renders a mocked book with name, balance, and restore button", () => {

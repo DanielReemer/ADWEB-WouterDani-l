@@ -1,16 +1,10 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import BookPage from "@/app/books/[slug]/page";
 import "@testing-library/jest-dom";
 
 const mockReset = jest.fn();
 const mockSetLoaded = jest.fn();
-const mockUseLoading = jest.fn(() => ({
-  loading: false,
-  data: undefined as typeof exampleBook | undefined,
-  setLoaded: mockSetLoaded,
-  reset: mockReset,
-}));
+const mockUseLoading = jest.fn();
 jest.mock("@/lib/hooks/useLoading", () => ({
   useLoading: () => mockUseLoading(),
 }));
@@ -44,15 +38,18 @@ type ExampleBook = {
   balance: number;
 };
 
-const exampleBook = {
+const exampleBook: ExampleBook = {
   id: "abc123",
   name: "Boeknaam",
   description: "Beschrijving van het boek",
   balance: 1234.56,
 };
 
-const renderPage = (loading: boolean = false, data: ExampleBook | undefined = undefined) => {
-  mockUseLoading.mockReturnValueOnce({
+const renderPage = (
+  loading: boolean = false,
+  data: ExampleBook | undefined = undefined
+) => {
+  mockUseLoading.mockReturnValue({
     loading,
     data,
     setLoaded: mockSetLoaded,
@@ -80,8 +77,12 @@ describe("BookPage", () => {
 
   it("renders book info when book is found", () => {
     renderPage(false, exampleBook);
-    expect(screen.getByRole("heading", { name: /boeknaam/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /bewerk dit boek/i })).toHaveAttribute("href", "/books/abc123/edit");
+    expect(
+      screen.getByRole("heading", { name: /boeknaam/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /bewerk dit boek/i })
+    ).toHaveAttribute("href", "/books/abc123/edit");
     expect(screen.getByText(/beschrijving van het boek/i)).toBeInTheDocument();
     expect(screen.getByText(/balans/i)).toBeInTheDocument();
     expect(screen.getByText("€ 1.234,56")).toBeInTheDocument();

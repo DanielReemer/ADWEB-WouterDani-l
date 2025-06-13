@@ -17,9 +17,16 @@ jest.mock("@/lib/hooks/useRequireUser", () => ({
   useRequireUser: () => ({ uid: "test-user-id" }),
 }));
 
-const fillAndSubmitForm = async (name = "Test Book", description = "Test Description") => {
-  fireEvent.change(screen.getByLabelText(/naam\s*\*/i), { target: { value: name } });
-  fireEvent.change(screen.getByLabelText("Omschrijving"), { target: { value: description } });
+const fillAndSubmitForm = async (
+  name = "Test Book",
+  description = "Test Description"
+) => {
+  fireEvent.change(screen.getByLabelText(/naam\s*\*/i), {
+    target: { value: name },
+  });
+  fireEvent.change(screen.getByLabelText("Omschrijving"), {
+    target: { value: description },
+  });
   fireEvent.click(screen.getByRole("button", { name: /Aanmaken/i }));
 };
 
@@ -39,10 +46,16 @@ describe("CreateBookPage", () => {
   });
 
   it("shows global error on book creation failure", async () => {
-    (addBook as jest.Mock).mockImplementationOnce(() => Promise.reject(new Error("Network Error")));
+    (addBook as jest.Mock).mockImplementationOnce(() =>
+      Promise.reject(new Error("Network Error"))
+    );
     render(<CreateBookPage />);
     await fillAndSubmitForm();
-    expect(await screen.findByText("Er is iets misgegaan bij het aanmaken van het boek.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Er is iets misgegaan bij het aanmaken van het boek."
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText("Aanmaken")).not.toHaveClass("loading");
   });
 

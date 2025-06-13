@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import BookPage from "@/app/books/page";
 import "@testing-library/jest-dom";

@@ -9,11 +9,12 @@ import Navbar from "@/components/navbar";
 import { useAuth } from "@/context/AuthContext";
 import "@testing-library/jest-dom";
 
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  );
-});
+jest.mock(
+  "next/link",
+  () =>
+    ({ children, href }: { children: React.ReactNode; href: string }) =>
+      <a href={href}>{children}</a>
+);
 
 jest.mock("@/context/AuthContext", () => ({
   useAuth: jest.fn(),
@@ -21,10 +22,6 @@ jest.mock("@/context/AuthContext", () => ({
 
 jest.mock("@/lib/firebase", () => ({
   auth: {},
-}));
-
-jest.mock("@/context/AuthContext", () => ({
-  useAuth: jest.fn(),
 }));
 
 const signOutMock = jest.fn();
@@ -40,18 +37,14 @@ describe("Navbar", () => {
 
   it("shows loading component if loading is true", () => {
     (useAuth as jest.Mock).mockReturnValue({ user: null, loading: true });
-
     render(<Navbar />);
-
     expect(screen.getByText(/even geduld/i)).toBeInTheDocument();
     expect(screen.getByText(/de inhoud wordt geladen/i)).toBeInTheDocument();
   });
 
   it("shows links for non-logged in user", () => {
     (useAuth as jest.Mock).mockReturnValue({ user: null, loading: false });
-
     render(<Navbar />);
-
     expect(screen.getByText("Inloggen")).toBeInTheDocument();
     expect(screen.getByText("Registreren")).toBeInTheDocument();
   });
@@ -61,9 +54,7 @@ describe("Navbar", () => {
       user: { email: "test@user.com" },
       loading: false,
     });
-
     render(<Navbar />);
-
     expect(screen.getByText(/welkom, test@user.com/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Uitloggen/i })
@@ -72,13 +63,9 @@ describe("Navbar", () => {
 
   it("opens and closes mobile menu", () => {
     (useAuth as jest.Mock).mockReturnValue({ user: null, loading: false });
-
     render(<Navbar />);
-
     const toggleButton = screen.getByRole("button", { name: /Menu/i });
-
     fireEvent.click(toggleButton);
-
     expect(screen.getAllByText("Inloggen").length).toBeGreaterThan(1);
     expect(screen.getAllByText("Registreren").length).toBeGreaterThan(1);
   });
@@ -89,14 +76,11 @@ describe("Navbar", () => {
       loading: false,
     });
     signOutMock.mockResolvedValue(undefined);
-
     render(<Navbar />);
-
     const logoutButton = screen.getByRole("button", { name: /uitloggen/i });
     await act(async () => {
       fireEvent.click(logoutButton);
     });
-
     expect(signOutMock).toHaveBeenCalled();
   });
 
@@ -106,18 +90,13 @@ describe("Navbar", () => {
       loading: false,
     });
     signOutMock.mockResolvedValue(undefined);
-
     render(<Navbar />);
-
     const menuButton = screen.getByRole("button", { name: /menu/i });
     fireEvent.click(menuButton);
-
     const welcomeMessages = screen.getAllByText(/welkom, test@user.com/i);
     expect(welcomeMessages.length).toBeGreaterThan(0);
-
     const logoutButtons = screen.getAllByRole("button", { name: /uitloggen/i });
     expect(logoutButtons.length).toBeGreaterThan(0);
-
     await act(async () => {
       fireEvent.click(logoutButtons[logoutButtons.length - 1]);
     });
@@ -129,12 +108,9 @@ describe("Navbar", () => {
       user: null,
       loading: false,
     });
-
     render(<Navbar />);
-
     const menuButton = screen.getByRole("button", { name: /menu/i });
     fireEvent.click(menuButton);
-
     const loginLinks = screen.getAllByText(/inloggen/i);
     expect(loginLinks.length).toBeGreaterThan(0);
     const registerLinks = screen.getAllByText(/registreren/i);
@@ -146,33 +122,25 @@ describe("Navbar", () => {
       user: { email: "test@user.com" },
       loading: false,
     });
-
     const error = new Error("Fout bij uitloggen");
     signOutMock.mockRejectedValue(error);
-
     const consoleErrorSpy = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
-
     render(<Navbar />);
-
     const logoutButton = screen.getByRole("button", { name: /uitloggen/i });
-
     await act(async () => {
       fireEvent.click(logoutButton);
     });
-
     await waitFor(() => {
       expect(signOutMock).toHaveBeenCalled();
       expect(consoleErrorSpy).toHaveBeenCalledWith("Logout failed:", error);
     });
-
     expect(
       screen.getByText(
         "Uitloggen mislukt. Probeer het opnieuw of ververs de pagina."
       )
     ).toBeInTheDocument();
-
     consoleErrorSpy.mockRestore();
   });
 });

@@ -1,10 +1,10 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import "@testing-library/jest-dom";
+import "@testing-library/react";
 
 jest.mock("react-firebase-hooks/auth", () => ({
-  useAuthState: () => [null, false, undefined],
+  useAuthState: jest.fn(() => [null, false, undefined]),
 }));
 jest.mock("@/lib/firebase", () => ({
   auth: {},
@@ -13,11 +13,11 @@ jest.mock("@/lib/firebase", () => ({
 function TestComponent() {
   const { user, loading, error } = useAuth();
   return (
-    <div>
+    <>
       <div>user: {user ? user.uid : "null"}</div>
       <div>loading: {loading ? "true" : "false"}</div>
       <div>error: {error ? "yes" : "no"}</div>
-    </div>
+    </>
   );
 }
 

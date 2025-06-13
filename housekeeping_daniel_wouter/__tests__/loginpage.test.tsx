@@ -23,7 +23,6 @@ describe("LoginPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-
     (useSignInWithEmailAndPassword as jest.Mock).mockReturnValue([
       jest.fn(),
       false,
@@ -34,7 +33,6 @@ describe("LoginPage", () => {
 
   it("renders login form correctly", () => {
     (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     render(<LoginPage />);
     expect(screen.getByLabelText(/e-mail/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/wachtwoord/i)).toBeInTheDocument();
@@ -55,7 +53,6 @@ describe("LoginPage", () => {
       null,
     ]);
     (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     render(<LoginPage />);
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "test@example.com" },
@@ -64,7 +61,6 @@ describe("LoginPage", () => {
       target: { value: "wrongpass" },
     });
     fireEvent.submit(screen.getByRole("button", { name: /inloggen/i }));
-
     await waitFor(() => {
       expect(
         screen.getByText(/inloggen mislukt: ongeldige gebruikersgegevens/i)
@@ -81,7 +77,6 @@ describe("LoginPage", () => {
       null,
     ]);
     (useAuthState as jest.Mock).mockReturnValue([null, false]);
-
     render(<LoginPage />);
     fireEvent.change(screen.getByLabelText(/e-mail/i), {
       target: { value: "test@example.com" },
@@ -90,7 +85,6 @@ describe("LoginPage", () => {
       target: { value: "password" },
     });
     fireEvent.submit(screen.getByRole("button", { name: /inloggen/i }));
-
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/");
     });
