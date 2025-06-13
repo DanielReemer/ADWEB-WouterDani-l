@@ -4,7 +4,6 @@ import Navbar from "@/components/navbar";
 import AuthGuard from "@/components/authguard";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { Metadata } from "next";
-import { ToastProvider } from "@/context/ToastContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
