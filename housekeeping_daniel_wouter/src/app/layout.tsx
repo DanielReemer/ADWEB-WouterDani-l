@@ -33,10 +33,8 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AuthGuard>
-            <ToastProvider>
-              <Navbar />
-              <main>{children}</main>
-            </ToastProvider>
+            <Navbar />
+            <main>{children}</main>
           </AuthGuard>
         </AuthProvider>
       </body>
