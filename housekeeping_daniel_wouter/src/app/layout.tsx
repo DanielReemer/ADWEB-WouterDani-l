@@ -4,6 +4,7 @@ import Navbar from "@/components/navbar";
 import AuthGuard from "@/components/authguard";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { Metadata } from "next";
+import { ToastProvider } from "@/context/ToastContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +33,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AuthGuard>
-            <Navbar />
-            <main>{children}</main>
+            <ToastProvider>
+              <Navbar />
+              <main>{children}</main>
+            </ToastProvider>
           </AuthGuard>
         </AuthProvider>
       </body>
