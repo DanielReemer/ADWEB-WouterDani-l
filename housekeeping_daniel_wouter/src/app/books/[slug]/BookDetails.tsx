@@ -5,9 +5,10 @@ import { Book } from "@/lib/collections/Book";
 
 type BookHeaderProps = {
   book: Book;
+  balance: number;
 };
 
-export default function BookDetails({ book }: BookHeaderProps) {
+export default function BookDetails({ book, balance }: BookHeaderProps) {
   return (
     <>
       <h2 className="text-3xl font-bold text-center text-blue-600 mb-2">
@@ -26,16 +27,16 @@ export default function BookDetails({ book }: BookHeaderProps) {
             <div className="text-gray-700">{book.description}</div>
           </div>
         )}
-        {typeof book.balance === "number" && (
+        {typeof balance === "number" && (
           <div>
             <div className="text-sm text-gray-500 mb-1">Balans</div>
             <div
               className={`text-2xl font-bold ${
-                book.balance < 0 ? "text-red-600" : "text-green-600"
+                balance < 0 ? "text-red-600" : "text-green-600"
               }`}
             >
               €{" "}
-              {book.balance.toLocaleString("nl-NL", {
+              {balance.toLocaleString("nl-NL", {
                 minimumFractionDigits: 2,
               })}
             </div>

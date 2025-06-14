@@ -25,6 +25,15 @@ export default function BookPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [error] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number>(0);
+
+  const calculateBalance = (transactions: Transaction[]) => {
+    const total = transactions.reduce((acc, transaction) => {
+      return acc + (transaction.type === "income" ? transaction.amount : -transaction.amount);
+    }
+    , 0);
+    setBalance(total);
+  }
 
   useEffect(() => {
     reset();
@@ -47,6 +56,7 @@ export default function BookPage() {
       slug,
       (transactions: Transaction[]) => {
         setTransactions(transactions);
+        calculateBalance(transactions);
         setTransactionsLoading(false);
       }
     );
@@ -72,7 +82,7 @@ export default function BookPage() {
 
   return (
     <div className="w-full h-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-      <BookDetails book={book} />
+      <BookDetails book={book} balance={balance}/>
       <BookTransactions
         transactions={transactions}
         loading={transactionsLoading}

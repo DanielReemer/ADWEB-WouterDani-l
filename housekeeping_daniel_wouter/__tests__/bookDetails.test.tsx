@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import BookDetails from "@/app/books/[slug]/BookDetails";
 import { Book } from "@/lib/collections/Book";
-import { useRouter } from "next/navigation";
 import "@testing-library/jest-dom";
 
 jest.mock("next/link", () => ({ children, href, className }: any) => (
@@ -16,7 +15,7 @@ const baseBook: Book = {
 };
 
 it("renders book name and edit link", () => {
-  render(<BookDetails book={baseBook} />);
+  render(<BookDetails book={baseBook} balance={0} />);
   expect(screen.getByText("Testboek")).toBeInTheDocument();
   const link = screen.getByTestId("link");
   expect(link).toHaveAttribute("href", "/books/b1/edit");
@@ -30,6 +29,7 @@ it("renders description if present", () => {
         ...baseBook,
         description: "Beschrijving tekst",
       }}
+      balance={0}
     />
   );
   expect(screen.getByText("Beschrijving tekst")).toBeInTheDocument();
@@ -37,19 +37,12 @@ it("renders description if present", () => {
 });
 
 it("does not render description block if description not present", () => {
-  render(<BookDetails book={baseBook} />);
+  render(<BookDetails book={baseBook} balance={0} />);
   expect(screen.queryByText("Beschrijving")).not.toBeInTheDocument();
 });
 
 it("renders green balance if positive", () => {
-  render(
-    <BookDetails
-      book={{
-        ...baseBook,
-        balance: 150.75,
-      }}
-    />
-  );
+  render(<BookDetails book={baseBook} balance={150.75} />);
   expect(screen.getByText("Balans")).toBeInTheDocument();
   const balance = screen.getByText(/€\s+150,75/);
   expect(balance).toBeInTheDocument();
@@ -57,19 +50,13 @@ it("renders green balance if positive", () => {
 });
 
 it("renders red balance if negative", () => {
-  render(
-    <BookDetails
-      book={{
-        ...baseBook,
-        balance: -42,
-      }}
-    />
-  );
+  render(<BookDetails book={baseBook} balance={-42} />);
   const balance = screen.getByText(/€\s+-42,00/);
   expect(balance).toHaveClass("text-red-600");
 });
 
 it("does not render balance block if balance is undefined", () => {
+  // @ts-expect-error purposely omitting balance to test fallback
   render(<BookDetails book={baseBook} />);
   expect(screen.queryByText("Balans")).not.toBeInTheDocument();
 });
