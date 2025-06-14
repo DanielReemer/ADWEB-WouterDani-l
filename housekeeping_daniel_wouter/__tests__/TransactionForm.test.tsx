@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import TransactionForm from "../src/app/dashboard/TransactionForm";
+import TransactionForm from "../src/app/books/[slug]/TransactionForm";
 import { addDoc, collection } from "firebase/firestore";
 
 jest.mock("../src/lib/firebase", () => ({

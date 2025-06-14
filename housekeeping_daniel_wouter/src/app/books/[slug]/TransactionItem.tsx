@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import TransactionForm from "@/app/dashboard/TransactionForm";
+import TransactionForm from "@/app/books/[slug]/TransactionForm";
 import { Timestamp } from "firebase/firestore";
 import Transaction from "@/lib/Transaction";
-import { updateTransaction } from "@/services/transaction.service";
-import { TransactionFormData } from "@/app/dashboard/TransactionForm";
+import {
+  deleteTransaction,
+  updateTransaction,
+} from "@/services/transaction.service";
+import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -19,15 +22,19 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
   const dateString = transaction.date.toDate().toLocaleDateString();
 
   const handleDelete = async () => {
-    const confirmed = confirm("Weet je zeker dat je deze transactie wilt verwijderen?");
+    const confirmed = confirm(
+      "Weet je zeker dat je deze transactie wilt verwijderen?"
+    );
     if (!confirmed) return;
 
-    try {
-      await deleteDoc(doc(db, "transactions", transaction.id));
-    } catch (err) {
+    deleteTransaction(
+      transaction.userId,
+      transaction.bookId,
+      transaction.id
+    ).catch((err) => {
       console.error("Fout bij verwijderen:", err);
       alert("Verwijderen mislukt.");
-    }
+    });
   };
 
   const handleUpdate = async (updated: TransactionFormData) => {
@@ -66,7 +73,8 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
           </div>
           <div className="flex items-center gap-4">
             <span>
-              €{transaction.amount} ({transaction.type === "income" ? "⬆️" : "⬇️"})
+              €{transaction.amount} (
+              {transaction.type === "income" ? "⬆️" : "⬇️"})
             </span>
             <button
               onClick={() => setIsEditing(true)}

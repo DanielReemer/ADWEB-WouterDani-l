@@ -15,7 +15,7 @@ import {
 import BookDetails from "@/app/books/[slug]/BookDetails";
 import BookNotFound from "@/app/books/[slug]/BookNotFound";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
-import { TransactionFormData } from "@/app/dashboard/TransactionForm";
+import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();

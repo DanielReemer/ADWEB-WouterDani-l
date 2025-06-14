@@ -5,10 +5,10 @@ import MonthSelector from "@/app/books/[slug]/MonthSelector";
 import Statistics from "@/app/books/[slug]/Statistics";
 import TransactionList from "@/app/books/[slug]/TransactionList";
 import SkeletonTransactionList from "@/app/ui/SkeletonTransactionList";
-import TransactionForm from "@/app/dashboard/TransactionForm";
+import TransactionForm from "@/app/books/[slug]/TransactionForm";
 import { filterTransactionsByMonth } from "@/lib/filterTransactions";
 import Transaction from "@/lib/Transaction";
-import { TransactionFormData } from "@/app/dashboard/TransactionForm";
+import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 
 type BookTransactionsProps = {
   transactions: Transaction[];

@@ -8,7 +8,7 @@ import MonthSelector from "../books/[slug]/MonthSelector";
 import Statistics from "../books/[slug]/Statistics";
 import TransactionList from "../books/[slug]/TransactionList"
 import SkeletonTransactionList from "../ui/SkeletonTransactionList";
-import TransactionForm from "./TransactionForm";
+import TransactionForm from "../books/[slug]/TransactionForm";
 import Transaction from "@/lib/Transaction";
 
 
