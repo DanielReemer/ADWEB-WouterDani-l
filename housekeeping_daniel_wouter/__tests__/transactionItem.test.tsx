@@ -62,7 +62,7 @@ describe("TransactionItem", () => {
     render(<TransactionItem transaction={transaction} />);
     const formattedDate = transaction.date.toDate().toLocaleDateString();
     expect(screen.getByText(formattedDate)).toBeInTheDocument();
-    expect(screen.getByText('/' + transaction.description + '/')).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes(transaction.description))).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`€${transaction.amount}.*⬇️`))).toBeInTheDocument();
     expect(screen.getByText("✏️ Bewerken")).toBeInTheDocument();
     expect(screen.getByText("🗑️ Verwijder")).toBeInTheDocument();
