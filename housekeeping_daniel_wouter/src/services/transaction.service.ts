@@ -34,6 +34,8 @@ import {
         const data = docSnap.data();
         transactions.push({
           id: docSnap.id,
+          userId: userId,
+          bookId: bookId,
           description: data.description || "",
           amount: data.amount || 0,
           type: data.type || "",
@@ -74,6 +76,8 @@ import {
           data
             ? {
                 id: docSnap.id,
+                userId: userId,
+                bookId: bookId,
                 description: data.description || "",
                 amount: data.amount || 0,
                 type: data.type || "",
@@ -94,9 +98,11 @@ import {
   export async function addTransaction(
     userId: string,
     bookId: string,
-    transaction: Omit<Transaction, "id">
+    transaction: Omit<Transaction, "id" | "userId" | "bookId">
   ): Promise<void> {
     await addDoc(collection(db, "users", userId, "books", bookId, "transactions"), {
+      userId: userId,
+      bookId: bookId,
       description: transaction.description,
       amount: transaction.amount,
       type: transaction.type,
@@ -117,6 +123,7 @@ import {
     transactionId: string,
     transaction: Partial<Transaction>
   ): Promise<void> {
+    console.log("Updating transaction", transactionId, transaction);
     await updateDoc(
       doc(db, "users", userId, "books", bookId, "transactions", transactionId),
       {

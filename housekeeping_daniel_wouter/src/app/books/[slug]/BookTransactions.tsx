@@ -8,12 +8,13 @@ import SkeletonTransactionList from "@/app/ui/SkeletonTransactionList";
 import TransactionForm from "@/app/dashboard/TransactionForm";
 import { filterTransactionsByMonth } from "@/lib/filterTransactions";
 import Transaction from "@/lib/Transaction";
+import { TransactionFormData } from "@/app/dashboard/TransactionForm";
 
 type BookTransactionsProps = {
   transactions: Transaction[];
   loading: boolean;
   error: string | null;
-  onSave: (transaction: Omit<Transaction, "id">) => Promise<void>;
+  onSave: (transaction: TransactionFormData) => Promise<void>;
 };
 
 export default function BookTransactions({
@@ -42,7 +43,7 @@ export default function BookTransactions({
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const handleSave = async (transaction: Omit<Transaction, "id">) => {
+  const handleSave = async (transaction: TransactionFormData) => {
     await onSave(transaction);
     setShowForm(false);
   };

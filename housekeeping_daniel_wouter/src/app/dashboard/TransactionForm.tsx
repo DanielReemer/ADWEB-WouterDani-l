@@ -1,19 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { Timestamp } from "firebase/firestore";
+import { useState, useEffect } from "react";
 import Transaction from "@/lib/Transaction";
+import { Timestamp } from "firebase/firestore";
+
+export type TransactionFormData = Omit<Transaction, "id" | "userId" | "bookId">;
 
 type TransactionFormProps = {
-  onSave: (transaction: Omit<Transaction, "id">) => Promise<void>;
+  onSave: (transaction: TransactionFormData) => Promise<void>;
+  initialTransaction?: TransactionFormData;
+  formTitle?: string;
+  submitLabel?: string;
 };
 
-export default function TransactionForm({ onSave }: TransactionFormProps) {
-  const [amount, setAmount] = useState<number>(0);
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [date, setDate] = useState<Date>(new Date());
+export default function TransactionForm({
+  onSave,
+  initialTransaction,
+  formTitle = "Nieuwe transactie",
+  submitLabel = "Toevoegen",
+}: TransactionFormProps) {
+  const [amount, setAmount] = useState<number>(
+    initialTransaction ? initialTransaction.amount : 0
+  );
+  const [description, setDescription] = useState(
+    initialTransaction ? initialTransaction.description : ""
+  );
+  const [type, setType] = useState<"income" | "expense">(
+    initialTransaction ? initialTransaction.type : "expense"
+  );
+  const [date, setDate] = useState<Date>(
+    initialTransaction ? initialTransaction.date.toDate() : new Date()
+  );
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (initialTransaction) {
+      setAmount(initialTransaction.amount);
+      setDescription(initialTransaction.description);
+      setType(initialTransaction.type);
+      setDate(initialTransaction.date.toDate());
+    }
+  }, [initialTransaction]);
 
   const resetForm = () => {
     setAmount(0);
@@ -30,27 +57,25 @@ export default function TransactionForm({ onSave }: TransactionFormProps) {
       alert("Voer een geldig bedrag in.");
       return;
     }
-
     if (!date) {
       alert("Kies een geldige datum.");
       return;
     }
-
     if (!type) {
       alert("Kies een type transactie.");
       return;
     }
 
     setSaving(true);
-    const newTransaction: Omit<Transaction, "id"> = {
+    const transaction: TransactionFormData = {
       amount,
       description,
       type,
       date: Timestamp.fromDate(date),
     };
 
-    onSave(newTransaction)
-      .then(() => resetForm())
+    onSave(transaction)
+      .then(() => !initialTransaction && resetForm())
       .catch(() => {
         alert("Er is iets misgegaan bij het opslaan van de transactie.");
       })
@@ -62,7 +87,7 @@ export default function TransactionForm({ onSave }: TransactionFormProps) {
       onSubmit={handleSubmit}
       className="bg-white p-4 mb-6 border rounded shadow"
     >
-      <h2 className="text-lg font-semibold mb-4">Nieuwe transactie</h2>
+      <h2 className="text-lg font-semibold mb-4">{formTitle}</h2>
       <label htmlFor="amount" className="block mb-2">
         Bedrag (€):
       </label>
@@ -116,7 +141,7 @@ export default function TransactionForm({ onSave }: TransactionFormProps) {
         className="bg-green-600 text-white px-4 py-2 rounded"
         disabled={saving}
       >
-        {saving ? "Opslaan..." : "Toevoegen"}
+        {saving ? "Opslaan..." : submitLabel}
       </button>
     </form>
   );
