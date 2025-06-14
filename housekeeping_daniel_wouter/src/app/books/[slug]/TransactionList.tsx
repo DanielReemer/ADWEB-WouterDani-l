@@ -1,4 +1,4 @@
-import TransactionItem from "./TransactionItem";
+import TransactionItem from "../../dashboard/TransactionItem";
 
 interface Transaction {
   id: string;

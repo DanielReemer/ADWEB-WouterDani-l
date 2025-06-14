@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { filterTransactionsByMonth } from "../../lib/filterTransactions";
-import MonthSelector from "../books/[slug]/MonthSelector";
-import Statistics from "../books/[slug]/Statistics";
-import TransactionList from "../books/[slug]/TransactionList"
+import MonthSelector from "./MonthSelector";
+import Statistics from "./Statistics";
+import TransactionList from "./TransactionList"
 import SkeletonTransactionList from "../ui/SkeletonTransactionList";
 import TransactionForm from "./TransactionForm";
 import Transaction from "@/lib/Transaction";

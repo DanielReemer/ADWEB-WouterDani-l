@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import TransactionList from "../src/app/dashboard/TransactionList";
+import TransactionList from "../src/app/books/[slug]/TransactionList";
 import "@testing-library/jest-dom";
 
 // Mock de TransactionItem component (we willen TransactionList testen, niet de inhoud van elk item)

@@ -94,7 +94,7 @@ import {
   export async function addTransaction(
     userId: string,
     bookId: string,
-    transaction: Transaction
+    transaction: Omit<Transaction, "id">
   ): Promise<void> {
     await addDoc(collection(db, "users", userId, "books", bookId, "transactions"), {
       description: transaction.description,

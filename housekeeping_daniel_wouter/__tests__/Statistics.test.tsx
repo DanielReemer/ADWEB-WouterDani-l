@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Statistics from "../src/app/dashboard/Statistics";
+import Statistics from "../src/app/books/[slug]/Statistics";
 import '@testing-library/jest-dom';
 
 describe("Statistics", () => {
