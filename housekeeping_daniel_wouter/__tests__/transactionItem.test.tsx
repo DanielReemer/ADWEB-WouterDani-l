@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import TransactionItem from "@/app/books/[slug]/TransactionItem";
 import Transaction from "@/lib/Transaction";
 import "@testing-library/jest-dom";
+import { Timestamp } from "firebase/firestore";
 
 jest.mock("@/app/books/[slug]/TransactionForm", () => ({
   __esModule: true,
@@ -34,7 +35,7 @@ const makeTransaction = (overrides?: Partial<Transaction>): Transaction => ({
   description: "Lunch",
   amount: 12.5,
   type: "expense",
-  date: mockDate as any,
+  date: Timestamp.fromDate(mockDate.toDate()),
   ...overrides,
 });
 
@@ -57,10 +58,12 @@ describe("TransactionItem", () => {
   });
 
   it("renders transaction info", () => {
-    render(<TransactionItem transaction={makeTransaction()} />);
-    expect(screen.getByText("15-5-2024")).toBeInTheDocument();
-    expect(screen.getByText(/Lunch/)).toBeInTheDocument();
-    expect(screen.getByText(/€12.5.*⬇️/)).toBeInTheDocument();
+    let transaction = makeTransaction();
+    render(<TransactionItem transaction={transaction} />);
+    const formattedDate = transaction.date.toDate().toLocaleDateString();
+    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+    expect(screen.getByText('/' + transaction.description + '/')).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`€${transaction.amount}.*⬇️`))).toBeInTheDocument();
     expect(screen.getByText("✏️ Bewerken")).toBeInTheDocument();
     expect(screen.getByText("🗑️ Verwijder")).toBeInTheDocument();
   });
