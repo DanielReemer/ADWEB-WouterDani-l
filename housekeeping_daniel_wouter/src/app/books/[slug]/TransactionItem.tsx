@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import TransactionForm from "@/app/books/[slug]/TransactionForm";
-import { Timestamp } from "firebase/firestore";
 import Transaction from "@/lib/Transaction";
 import {
   deleteTransaction,

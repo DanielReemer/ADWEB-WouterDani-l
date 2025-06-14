@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import MonthSelector from "@/app/books/[slug]/MonthSelector";
 import Statistics from "@/app/books/[slug]/Statistics";
 import TransactionList from "@/app/books/[slug]/TransactionList";

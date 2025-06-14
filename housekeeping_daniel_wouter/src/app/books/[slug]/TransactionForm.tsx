@@ -28,7 +28,7 @@ export default function TransactionForm({
   const [type, setType] = useState<"income" | "expense">(
     initialTransaction ? initialTransaction.type : "expense"
   );
-  const [date, setDate] = useState<Date>(
+  const [date, setDate] = useState<Date | null>(
     initialTransaction ? initialTransaction.date.toDate() : new Date()
   );
   const [saving, setSaving] = useState(false);
@@ -51,7 +51,6 @@ export default function TransactionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (saving) return;
 
     if (!amount || amount <= 0) {
       alert("Voer een geldig bedrag in.");
@@ -110,8 +109,10 @@ export default function TransactionForm({
       <input
         id="date"
         type="date"
-        value={date.toISOString().split("T")[0]}
-        onChange={(e) => setDate(new Date(e.target.value))}
+        value={date ? date.toISOString().split("T")[0] : ""}
+        onChange={(e) => {
+          setDate(e.target.value ? new Date(e.target.value) : null);
+        }}
         className="border p-2 w-full mb-4"
       />
       <label htmlFor="description" className="block mb-2">
