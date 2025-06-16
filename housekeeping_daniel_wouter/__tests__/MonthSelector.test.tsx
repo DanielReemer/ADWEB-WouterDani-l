@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import MonthSelector from "../src/app/dashboard/MonthSelector";
+import MonthSelector from "../src/app/books/[slug]/MonthSelector";
 import '@testing-library/jest-dom';
 
 

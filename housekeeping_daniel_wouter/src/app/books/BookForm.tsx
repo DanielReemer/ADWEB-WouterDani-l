@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Book } from "@/lib/collections/Book";
 
-export type BookFormData = Omit<Book, "id" | "balance"> & {
+export type BookFormData = Omit<Book, "id"> & {
   errors?: {
     name?: string;
     description?: string;

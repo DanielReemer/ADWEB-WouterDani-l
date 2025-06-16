@@ -89,7 +89,7 @@ export async function addBook(
 export async function updateBook(
   userId: string,
   id: string,
-  book: Omit<Book, "id" | "balance">
+  book: Omit<Book, "id">
 ): Promise<void> {
   await updateDoc(doc(db, "users", userId, "books", id), {
     name: book.name,

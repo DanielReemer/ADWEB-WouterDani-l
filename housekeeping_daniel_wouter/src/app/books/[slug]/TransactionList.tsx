@@ -1,12 +1,5 @@
-import TransactionItem from "./TransactionItem";
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  date: { seconds: number };
-}
+import TransactionItem from "@/app/books/[slug]/TransactionItem";
+import Transaction from "@/lib/Transaction";
 
 interface Props {
   transactions: Transaction[];
