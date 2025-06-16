@@ -1,4 +1,3 @@
-import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import AuthGuard from "@/components/authguard";
@@ -39,9 +38,7 @@ describe("AuthGuard routing behavior", () => {
   test("shows loading while auth loading", () => {
     useAuthMock.mockReturnValue({ user: null, loading: true });
     usePathnameMock.mockReturnValue("/anypath");
-
     renderAuthGuard();
-
     expect(screen.getByText("Loading...")).toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
   });
@@ -49,9 +46,7 @@ describe("AuthGuard routing behavior", () => {
   test("redirects to /login if unauthenticated on protected route", async () => {
     useAuthMock.mockReturnValue({ user: null, loading: false });
     usePathnameMock.mockReturnValue("/dashboard");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/login");
     });
@@ -60,9 +55,7 @@ describe("AuthGuard routing behavior", () => {
   test("redirects to / if authenticated user visits /login", async () => {
     useAuthMock.mockReturnValue({ user: { uid: "user1" }, loading: false });
     usePathnameMock.mockReturnValue("/login");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/");
     });
@@ -71,9 +64,7 @@ describe("AuthGuard routing behavior", () => {
   test("redirects to / if authenticated user visits /register", async () => {
     useAuthMock.mockReturnValue({ user: { uid: "user1" }, loading: false });
     usePathnameMock.mockReturnValue("/register");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/");
     });
@@ -82,9 +73,7 @@ describe("AuthGuard routing behavior", () => {
   test("does not redirect if authenticated user visits protected route", async () => {
     useAuthMock.mockReturnValue({ user: { uid: "user1" }, loading: false });
     usePathnameMock.mockReturnValue("/dashboard");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).not.toHaveBeenCalled();
     });
@@ -93,9 +82,7 @@ describe("AuthGuard routing behavior", () => {
   test("does not redirect if unauthenticated user visits /login", async () => {
     useAuthMock.mockReturnValue({ user: null, loading: false });
     usePathnameMock.mockReturnValue("/login");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).not.toHaveBeenCalled();
     });
@@ -104,9 +91,7 @@ describe("AuthGuard routing behavior", () => {
   test("does not redirect if unauthenticated user visits /register", async () => {
     useAuthMock.mockReturnValue({ user: null, loading: false });
     usePathnameMock.mockReturnValue("/register");
-
     renderAuthGuard();
-
     await waitFor(() => {
       expect(replaceMock).not.toHaveBeenCalled();
     });

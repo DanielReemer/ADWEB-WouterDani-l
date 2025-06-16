@@ -1,17 +1,10 @@
-import React from "react";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import BookPage from "@/app/books/[slug]/page";
 import "@testing-library/jest-dom";
 
-// Mocks
 const mockReset = jest.fn();
 const mockSetLoaded = jest.fn();
-const mockUseLoading = jest.fn(() => ({
-  loading: false,
-  data: undefined as typeof exampleBook | undefined,
-  setLoaded: mockSetLoaded,
-  reset: mockReset,
-}));
+const mockUseLoading = jest.fn();
 jest.mock("@/lib/hooks/useLoading", () => ({
   useLoading: () => mockUseLoading(),
 }));
@@ -34,11 +27,35 @@ jest.mock("next/link", () => ({
 
 jest.mock("@/app/loading", () => () => <div>LoadingMock</div>);
 
-const exampleBook = {
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: () => ({ uid: "test-user-id" }),
+}));
+
+type ExampleBook = {
+  id: string;
+  name: string;
+  description: string;
+  balance: number;
+};
+
+const exampleBook: ExampleBook = {
   id: "abc123",
   name: "Boeknaam",
   description: "Beschrijving van het boek",
   balance: 1234.56,
+};
+
+const renderPage = (
+  loading: boolean = false,
+  data: ExampleBook | undefined = undefined
+) => {
+  mockUseLoading.mockReturnValue({
+    loading,
+    data,
+    setLoaded: mockSetLoaded,
+    reset: mockReset,
+  });
+  render(<BookPage />);
 };
 
 describe("BookPage", () => {
@@ -48,36 +65,18 @@ describe("BookPage", () => {
   });
 
   it("shows loading spinner when loading", () => {
-    mockUseLoading.mockReturnValueOnce({
-      loading: true,
-      data: undefined,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-    render(<BookPage />);
+    renderPage(true);
     expect(screen.getByText("LoadingMock")).toBeInTheDocument();
   });
 
   it("shows 'not found' message when no book found", () => {
-    mockUseLoading.mockReturnValueOnce({
-      loading: false,
-      data: undefined,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-    render(<BookPage />);
+    renderPage(false, undefined);
     expect(screen.getByText(/geen gegevens gevonden/i)).toBeInTheDocument();
     expect(screen.getByText(/het gevraagde boek/i)).toBeInTheDocument();
   });
 
   it("renders book info when book is found", () => {
-    mockUseLoading.mockReturnValueOnce({
-      loading: false,
-      data: exampleBook,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-    render(<BookPage />);
+    renderPage(false, exampleBook);
     expect(
       screen.getByRole("heading", { name: /boeknaam/i })
     ).toBeInTheDocument();
@@ -90,13 +89,7 @@ describe("BookPage", () => {
   });
 
   it("renders negative balance in red", () => {
-    mockUseLoading.mockReturnValueOnce({
-      loading: false,
-      data: { ...exampleBook, balance: -42.5 },
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-    render(<BookPage />);
+    renderPage(false, { ...exampleBook, balance: -42.5 });
     const balance = screen.getByText("€ -42,50");
     expect(balance).toBeInTheDocument();
     expect(balance).toHaveClass("text-red-600");

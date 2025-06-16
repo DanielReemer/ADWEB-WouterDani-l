@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 describe("BookList component", () => {
-  const listenFn = jest.fn((listener: (books: Book[]) => void) => {
+  const listenFn = jest.fn((_userId: string, _listener: (books: Book[]) => void) => {
     return () => {};
   });
 
@@ -47,7 +47,7 @@ describe("BookList component", () => {
       setLoaded: jest.fn(),
       reset: jest.fn(),
     });
-    render(<BookList listenFn={listenFn} title="Loading boeken" />);
+    render(<BookList listenFn={listenFn} userId="test-user-id" title="Loading boeken" />);
     expect(screen.getByText("Loading boeken")).toBeInTheDocument();
     expect(
       screen.getAllByText((_, el) => !!el?.className.includes("animate-pulse"))
@@ -61,12 +61,11 @@ describe("BookList component", () => {
       setLoaded: jest.fn(),
       reset: jest.fn(),
     });
-    render(<BookList listenFn={listenFn} />);
+    render(<BookList listenFn={listenFn} userId="test-user-id" />);
     expect(screen.getByText("Geen boeken gevonden.")).toBeInTheDocument();
   });
 
   it("renders list of books with correct info and links", () => {
-    // Setup mock data
     const books: Book[] = [
       { id: "b1", name: "Test Boek 1", balance: 123.45 },
       { id: "b2", name: "Test Boek 2", balance: -10.0 },
@@ -79,20 +78,15 @@ describe("BookList component", () => {
       reset: jest.fn(),
     });
 
+    render(<BookList listenFn={listenFn} userId="test-user-id" title="Mijn Boeken" />);
 
-    // Render component
-    render(<BookList listenFn={listenFn} title="Mijn Boeken" />);
-
-    // Setup assertions
     const balanceElements = screen.getAllByText("Balans:");
-    
-    // Assertions
+
     expect(screen.getByText("Mijn Boeken")).toBeInTheDocument();
-    
     expect(balanceElements).toHaveLength(books.length);
+
     books.forEach((book) => {
       expect(screen.getByText(book.name)).toBeInTheDocument();
-      
       const euro = `€ ${(book.balance ?? 0).toLocaleString("nl-NL", {
         minimumFractionDigits: 2,
       })}`;

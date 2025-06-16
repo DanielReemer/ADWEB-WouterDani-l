@@ -5,12 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import BookForm, { BookFormData } from "@/app/books/BookForm";
 import { Book } from "@/lib/collections/Book";
 import { listenToBook, updateBook } from "@/services/book.service";
-import { archiveBook } from "@/services/book.service";
+import { archiveBook } from "@/services/bookArchive.service";
 import Loading from "@/app/loading";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
 export default function EditBookPage() {
   const slug = useParams<{ slug: string }>().slug;
   const router = useRouter();
+  const user = useRequireUser();
 
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function EditBookPage() {
 
   useEffect(() => {
     if (!slug) return;
-    const unsubscribe = listenToBook(slug, (book) => {
+    const unsubscribe = listenToBook(user.uid, slug, (book) => {
       if (!book) {
         setGlobalError("Boek niet gevonden.");
       } else {
@@ -27,14 +29,14 @@ export default function EditBookPage() {
       }
     });
     return () => unsubscribe();
-  }, [slug]);
+  }, [slug, user.uid]);
 
   const handleUpdate = async (data: BookFormData) => {
     if (!book) return;
     setLoading(true);
 
     try {
-      await updateBook(book.id, {
+      await updateBook(user.uid, book.id, {
         name: data.name,
         description: data.description,
       });
@@ -52,7 +54,7 @@ export default function EditBookPage() {
     setArchiving(true);
     setGlobalError(undefined);
     try {
-      await archiveBook(book.id);
+      await archiveBook(user.uid, book.id);
       router.push("/books");
     } catch (err) {
       console.error(err);
