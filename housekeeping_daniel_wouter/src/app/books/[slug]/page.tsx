@@ -16,6 +16,7 @@ import BookDetails from "@/app/books/[slug]/BookDetails";
 import BookNotFound from "@/app/books/[slug]/BookNotFound";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
+import CategorySidebar from "./CategorySidebar";
 
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();
@@ -81,7 +82,8 @@ export default function BookPage() {
   }
 
   return (
-    <div className="w-full h-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+  <div className="flex flex-col md:flex-row gap-6">
+    <div className="flex-grow w-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
       <BookDetails book={book} balance={balance}/>
       <BookTransactions
         transactions={transactions}
@@ -90,5 +92,7 @@ export default function BookPage() {
         onSave={handleSaveTransaction}
       />
     </div>
+    <CategorySidebar />
+  </div>
   );
 }
