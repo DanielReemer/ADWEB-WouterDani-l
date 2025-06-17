@@ -16,6 +16,7 @@ import BookDetails from "@/app/books/[slug]/BookDetails";
 import BookNotFound from "@/app/books/[slug]/BookNotFound";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
+import { calculateBalance } from "@/lib/utils/calculateBalance";
 
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();
@@ -26,14 +27,6 @@ export default function BookPage() {
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [error] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0);
-
-  const calculateBalance = (transactions: Transaction[]) => {
-    const total = transactions.reduce((acc, transaction) => {
-      return acc + (transaction.type === "income" ? transaction.amount : -transaction.amount);
-    }
-    , 0);
-    setBalance(total);
-  }
 
   useEffect(() => {
     reset();
@@ -56,7 +49,7 @@ export default function BookPage() {
       slug,
       (transactions: Transaction[]) => {
         setTransactions(transactions);
-        calculateBalance(transactions);
+        setBalance(calculateBalance(transactions));
         setTransactionsLoading(false);
       }
     );
