@@ -13,6 +13,12 @@ jest.mock("@/services/book.service", () => ({
 jest.mock("@/lib/hooks/useRequireUser", () => ({
   useRequireUser: () => ({ uid: "test-user-id" }),
 }));
+jest.mock("@/services/transaction.service", () => ({
+  listenToTransactions: jest.fn(),
+}));
+jest.mock("@/lib/utils/calculateBalance", () => ({
+  calculateBalance: jest.fn(() => 0),
+}));
 
 describe("BookPage", () => {
   it("renders the heading", () => {
