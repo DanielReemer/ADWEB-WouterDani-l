@@ -25,8 +25,9 @@ jest.mock("@/lib/firebase", () => ({
 }));
 
 const signOutMock = jest.fn();
-jest.mock("react-firebase-hooks/auth", () => ({
-  useSignOut: () => [signOutMock],
+
+jest.mock("@/services/auth.service", () => ({
+  signOut: () => signOutMock(),
 }));
 
 describe("Navbar", () => {
@@ -75,7 +76,7 @@ describe("Navbar", () => {
       user: { email: "test@user.com" },
       loading: false,
     });
-    signOutMock.mockResolvedValue(undefined);
+    signOutMock.mockResolvedValue(true);
     render(<Navbar />);
     const logoutButton = screen.getByRole("button", { name: /uitloggen/i });
     await act(async () => {
@@ -89,7 +90,7 @@ describe("Navbar", () => {
       user: { email: "test@user.com" },
       loading: false,
     });
-    signOutMock.mockResolvedValue(undefined);
+    signOutMock.mockResolvedValue(true);
     render(<Navbar />);
     const menuButton = screen.getByRole("button", { name: /menu/i });
     fireEvent.click(menuButton);
@@ -134,13 +135,13 @@ describe("Navbar", () => {
     });
     await waitFor(() => {
       expect(signOutMock).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Logout failed:", error);
+      expect(
+        screen.getByText(
+          "Uitloggen mislukt. Probeer het opnieuw of ververs de pagina."
+        )
+      ).toBeInTheDocument();
     });
-    expect(
-      screen.getByText(
-        "Uitloggen mislukt. Probeer het opnieuw of ververs de pagina."
-      )
-    ).toBeInTheDocument();
+
     consoleErrorSpy.mockRestore();
   });
 });
