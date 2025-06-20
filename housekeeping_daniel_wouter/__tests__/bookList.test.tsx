@@ -1,99 +1,95 @@
-import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import BookList from "@/app/books/BookList";
-import { useLoading as mockUseLoading } from "@/lib/hooks/useLoading";
-import { Book } from "@/lib/collections/Book";
 import "@testing-library/jest-dom";
+import { Book } from "@/lib/collections/Book";
+import React from "react";
 
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ children, href }: any) => <a href={href}>{children}</a>,
-}));
+const books: Book[] = [
+  {
+    id: "1",
+    name: "Boek 1",
+    balance: 150.25,
+  },
+  {
+    id: "2",
+    name: "Boek 2",
+    balance: -25.5,
+  },
+];
 
-jest.mock("@/services/book.service", () => ({
-  listenToBooks: jest.fn(),
-}));
+describe("BookList", () => {
+  let consoleErrorSpy: jest.SpyInstance;
 
-jest.mock("@/lib/hooks/useLoading", () => ({
-  useLoading: jest.fn(() => ({
-    loading: false,
-    data: [],
-    setLoaded: jest.fn(),
-    reset: jest.fn(),
-  })),
-}));
-
-jest.mock("@/context/AuthContext", () => ({
-  useAuth: jest.fn(() => ({
-    user: { uid: "test-user" },
-    loading: false,
-  })),
-}));
-
-afterEach(() => {
-  cleanup();
-  jest.clearAllMocks();
-});
-
-describe("BookList component", () => {
-  const listenFn = jest.fn((_userId: string, _listener: (books: Book[]) => void) => {
-    return () => {};
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  it("renders loading skeletons when loading", () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: true,
-      data: [],
-      setLoaded: jest.fn(),
-      reset: jest.fn(),
-    });
-    render(<BookList listenFn={listenFn} userId="test-user-id" title="Loading boeken" />);
-    expect(screen.getByText("Loading boeken")).toBeInTheDocument();
-    expect(
-      screen.getAllByText((_, el) => !!el?.className.includes("animate-pulse"))
-    ).toHaveLength(5);
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
   });
 
-  it("shows empty message when no books", () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: [],
-      setLoaded: jest.fn(),
-      reset: jest.fn(),
-    });
-    render(<BookList listenFn={listenFn} userId="test-user-id" />);
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it("renders message when books array is empty", () => {
+    render(<BookList books={[]} />);
     expect(screen.getByText("Geen boeken gevonden.")).toBeInTheDocument();
   });
 
-  it("renders list of books with correct info and links", () => {
-    const books: Book[] = [
-      { id: "b1", name: "Test Boek 1", balance: 123.45 },
-      { id: "b2", name: "Test Boek 2", balance: -10.0 },
-      { id: "b3", name: "Test Boek 3", balance: 0 },
-    ];
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: books,
-      setLoaded: jest.fn(),
-      reset: jest.fn(),
-    });
+  it("renders message when books is empty", () => {
+    render(<BookList books={[]} />);
+    expect(screen.getByText("Geen boeken gevonden.")).toBeInTheDocument();
+  });
 
-    render(<BookList listenFn={listenFn} userId="test-user-id" title="Mijn Boeken" />);
+  it("renders default title", () => {
+    render(<BookList books={books} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Boekenlijst"
+    );
+  });
 
-    const balanceElements = screen.getAllByText("Balans:");
+  it("renders custom title", () => {
+    render(<BookList books={books} title="Mijn Boeken" />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Mijn Boeken"
+    );
+  });
 
-    expect(screen.getByText("Mijn Boeken")).toBeInTheDocument();
-    expect(balanceElements).toHaveLength(books.length);
+  it("renders each book's name", () => {
+    render(<BookList books={books} />);
+    expect(screen.getByText("Boek 1")).toBeInTheDocument();
+    expect(screen.getByText("Boek 2")).toBeInTheDocument();
+  });
 
-    books.forEach((book) => {
-      expect(screen.getByText(book.name)).toBeInTheDocument();
-      const euro = `€ ${(book.balance ?? 0).toLocaleString("nl-NL", {
-        minimumFractionDigits: 2,
-      })}`;
-      expect(screen.getByText(euro)).toBeInTheDocument();
-    });
-    expect(screen.getByText("€ 123,45").className).toMatch(/text-green-600/);
-    expect(screen.getByText("€ -10,00").className).toMatch(/text-red-600/);
-    expect(screen.getByText("€ 0,00").className).toMatch(/text-green-600/);
+  it("renders positive and negative balances with correct color and format", () => {
+    render(<BookList books={books} />);
+    const posBalance = screen.getByText(
+      (_, node) => node?.textContent?.replace(/\s+/g, "") === "€150,25"
+    );
+    const negBalance = screen.getByText(
+      (_, node) => node?.textContent?.replace(/\s+/g, "") === "€-25,50"
+    );
+    expect(posBalance).toHaveClass("text-green-600");
+    expect(negBalance).toHaveClass("text-red-600");
+  });
+
+  it("renders children when function is provided", () => {
+    render(
+      <BookList books={books}>
+        {(book) => (
+          <span data-testid={`custom-${book.id}`}>{book.name}-custom</span>
+        )}
+      </BookList>
+    );
+    expect(screen.getByTestId("custom-1")).toHaveTextContent("Boek 1-custom");
+    expect(screen.getByTestId("custom-2")).toHaveTextContent("Boek 2-custom");
+  });
+
+  it("renders nothing for balance if not a number", () => {
+    const booksNoBalance: Book[] = [{ id: "3", name: "Boek 3" }];
+    render(<BookList books={booksNoBalance} />);
+    expect(screen.getByText("Boek 3")).toBeInTheDocument();
+    expect(screen.queryByText(/Balans/)).not.toBeInTheDocument();
   });
 });

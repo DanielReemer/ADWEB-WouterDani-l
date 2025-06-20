@@ -1,93 +1,110 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ArchivedBooksPage from "@/app/books/archive/page";
-import "@testing-library/jest-dom";
-import "@testing-library/react";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
+import { listenToArchivedBooks } from "@/services/archivedBook.service";
 import { restoreBook } from "@/services/bookArchive.service";
+import "@testing-library/jest-dom";
 
-const TEST_USER_ID = "test-user-id";
-
-jest.mock("@/app/books/BookList", () => ({
-  __esModule: true,
-  default: ({ listenFn, title, children }: any) => (
-    <div>
-      <div data-testid="booklist-title">{title}</div>
-      {typeof children === "function" &&
-        children({ id: "1", name: "Test Book", balance: 42 })}
-    </div>
-  ),
-}));
-
-jest.mock("next/link", () => ({
-  __esModule: true,
-  default: ({ children, ...props }: any) => <a {...props}>{children}</a>,
-}));
-
-jest.mock("@/services/bookArchive.service", () => ({
-  restoreBook: jest.fn(() => Promise.resolve()),
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: jest.fn(),
 }));
 
 jest.mock("@/services/archivedBook.service", () => ({
-  listenToArchivedBooks: jest.fn(() => (callback: any) => {
-    callback([
-      { id: "1", name: "Test Book", balance: 42 },
-      { id: "2", name: "Another Book", balance: 100 },
-    ]);
-    return () => {};
-  }),
+  listenToArchivedBooks: jest.fn(),
 }));
 
-jest.mock("@/lib/hooks/useRequireUser", () => ({
-  useRequireUser: () => ({ uid: TEST_USER_ID }),
+jest.mock("@/services/bookArchive.service", () => ({
+  restoreBook: jest.fn(),
 }));
 
-const renderPage = () => render(<ArchivedBooksPage />);
-const getRestoreButton = () =>
-  screen.getByRole("button", { name: /Terugzetten/i });
+const mockUser = { uid: "user-123" };
+const mockBooks = [
+  { id: "1", name: "Boek 1", balance: 100 },
+  { id: "2", name: "Boek 2", balance: -50 },
+];
 
 describe("ArchivedBooksPage", () => {
+  let consoleErrorSpy: jest.SpyInstance;
+  
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  it("renders the heading and description", () => {
-    renderPage();
-    expect(
-      screen.getByRole("heading", { name: /Gearchiveerde boekjes/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Hier zie je alle huishoudboekjes die je hebt gearchiveerd/i
-      )
-    ).toBeInTheDocument();
-  });
-
-  it("renders the back link", () => {
-    renderPage();
-    const link = screen.getByRole("link", {
-      name: /Terug naar actieve boeken/i,
+    (useRequireUser as jest.Mock).mockReturnValue(mockUser);
+    (listenToArchivedBooks as jest.Mock).mockImplementation((_uid, cb) => {
+      cb(mockBooks);
+      return jest.fn();
     });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/books");
+    (restoreBook as jest.Mock).mockResolvedValue(undefined);
   });
 
-  it("renders BookList with correct props", () => {
-    renderPage();
-    expect(screen.getByTestId("booklist-title")).toHaveTextContent(
-      "Gearchiveerde boekjes"
+  it("renders header and description", () => {
+    render(<ArchivedBooksPage />);
+    expect(
+      screen.getAllByRole("heading", { name: /gearchiveerde boekjes/i })[0]
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/huishoudboekjes die je hebt gearchiveerd/i)
+    ).toBeInTheDocument();
+  });
+
+  it("renders link to active books", () => {
+    render(<ArchivedBooksPage />);
+    expect(
+      screen.getByRole("link", { name: /terug naar actieve boeken/i })
+    ).toHaveAttribute("href", "/books");
+  });
+
+  it("renders books with correct info and balance colors", () => {
+    render(<ArchivedBooksPage />);
+    expect(screen.getByText("Boek 1")).toBeInTheDocument();
+    expect(screen.getByText("Boek 2")).toBeInTheDocument();
+    expect(screen.getAllByText(/balans:/i)).toHaveLength(2);
+    expect(
+      screen.getByText("€ 100,00").className.includes("text-green-600")
+    ).toBe(true);
+    expect(
+      screen.getByText("€ -50,00").className.includes("text-red-600")
+    ).toBe(true);
+  });
+
+  it("calls restoreBook with correct args when restore button is clicked", async () => {
+    render(<ArchivedBooksPage />);
+    const restoreButtons = screen.getAllByRole("button", {
+      name: /terugzetten/i,
+    });
+    fireEvent.click(restoreButtons[0]);
+    await waitFor(() =>
+      expect(restoreBook).toHaveBeenCalledWith("user-123", "1")
     );
   });
 
-  it("renders a mocked book with name, balance, and restore button", () => {
-    renderPage();
-    expect(screen.getByText("Test Book")).toBeInTheDocument();
-    expect(screen.getByText(/Balans:/i)).toBeInTheDocument();
-    expect(screen.getByText(/€\s*42,00/)).toBeInTheDocument();
-    expect(getRestoreButton()).toBeInTheDocument();
+  it("handles restoreBook errors gracefully", async () => {
+    (restoreBook as jest.Mock).mockRejectedValue(new Error("fail"));
+    render(<ArchivedBooksPage />);
+    const restoreButtons = screen.getAllByRole("button", {
+      name: /terugzetten/i,
+    });
+    fireEvent.click(restoreButtons[0]);
+    await waitFor(() =>
+      expect(restoreBook).toHaveBeenCalledWith("user-123", "1")
+    );
   });
 
-  it("calls restoreBook when restore button is clicked", () => {
-    renderPage();
-    getRestoreButton().click();
-    expect(restoreBook).toHaveBeenCalledWith(TEST_USER_ID, "1");
+  it("listens to archived books on mount and unsubscribes on unmount", () => {
+    const unsubscribe = jest.fn();
+    (listenToArchivedBooks as jest.Mock).mockImplementation((_uid, cb) => {
+      cb(mockBooks);
+      return unsubscribe;
+    });
+    const { unmount } = render(<ArchivedBooksPage />);
+    unmount();
+    expect(unsubscribe).toHaveBeenCalled();
   });
 });
