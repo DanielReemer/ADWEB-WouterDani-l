@@ -12,7 +12,6 @@ import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 import { Category } from "@/lib/collections/Category";
 import { getCategories } from "@/services/category.service";
 import { useParams } from "next/navigation";
-import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import CategoryFilter from "./CategoryFilter";
 
 type BookTransactionsProps = {
@@ -37,7 +36,6 @@ export default function BookTransactions({
   const [categories, setCategories] = useState<Category[]>([]);
 
   const { slug } = useParams<{ slug: string }>();
-  const user = useRequireUser();
 
   useEffect(() => {
     if (slug) {

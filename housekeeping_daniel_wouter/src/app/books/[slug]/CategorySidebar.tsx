@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Category } from "@/lib/collections/Category";
-import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import {
   getCategories,
   addCategory,
@@ -12,7 +11,6 @@ import {
 } from "@/services/category.service";
 
 export default function CategorySidebar() {
-  const user = useRequireUser();
   const { slug } = useParams<{ slug: string }>(); // bookId
 
   const [categories, setCategories] = useState<Category[]>([]);
