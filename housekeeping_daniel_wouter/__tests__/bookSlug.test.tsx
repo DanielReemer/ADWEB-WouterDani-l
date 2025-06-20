@@ -14,7 +14,7 @@ import {
   addTransaction as mockAddTransaction,
 } from "@/services/transaction.service";
 import { Book } from "@/lib/collections/Book";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import "@testing-library/jest-dom";
 
 jest.mock("next/navigation", () => ({

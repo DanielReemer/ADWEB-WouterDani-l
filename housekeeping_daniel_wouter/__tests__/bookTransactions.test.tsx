@@ -3,7 +3,7 @@ import BookTransactions from "@/app/books/[slug]/BookTransactions";
 import { Timestamp } from "firebase/firestore";
 import { filterTransactionsByMonth } from "@/lib/filterTransactions";
 import "@testing-library/jest-dom";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 
 jest.mock("@/app/books/[slug]/MonthSelector", () => ({
   __esModule: true,

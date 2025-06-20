@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import TransactionList from "@/app/books/[slug]/TransactionList";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import "@testing-library/jest-dom";
 
 jest.mock("@/app/books/[slug]/TransactionItem", () => ({

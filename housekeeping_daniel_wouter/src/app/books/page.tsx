@@ -6,7 +6,7 @@ import { listenToBooks } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { listenToTransactions } from "@/services/transaction.service";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import { calculateBalance } from "@/lib/utils/calculateBalance";
 
 export default function BookPage() {

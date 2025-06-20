@@ -1,5 +1,5 @@
 import { filterTransactionsByMonth } from "../src/lib/filterTransactions";
-import Transaction from "../src/lib/Transaction";
+import Transaction from "../src/lib/collections/Transaction";
 
 describe("filterTransactionsByMonth", () => {
   it("filters only transactions from selected month", () => {

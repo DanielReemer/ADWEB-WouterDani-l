@@ -1,4 +1,4 @@
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 
 export function calculateBalance(transactions: Transaction[]): number {
     return transactions.reduce((acc, transaction) => {

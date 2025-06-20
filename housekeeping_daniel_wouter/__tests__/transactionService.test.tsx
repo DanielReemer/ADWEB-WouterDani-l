@@ -6,7 +6,7 @@ import {
   deleteTransaction,
 } from "@/services/transaction.service";
 import { db } from "@/lib/firebase";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import { Timestamp } from "firebase/firestore";
 import { act } from "react";
 

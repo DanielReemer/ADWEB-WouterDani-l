@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import TransactionItem from "@/app/books/[slug]/TransactionItem";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import "@testing-library/jest-dom";
 import { Timestamp } from "firebase/firestore";
 

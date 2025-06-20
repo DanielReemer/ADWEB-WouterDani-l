@@ -9,14 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
-export interface Category {
-  id?: string;
-  name: string;
-  budget: number;
-  bookId: string;
-  createdAt?: Date;
-}
+import { Category } from "@/lib/collections/Category";
 
 export function getCategories(
   bookId: string,
@@ -38,8 +31,7 @@ export function getCategories(
 
 export function addCategory(category: Category) {
   return addDoc(collection(db, "categories"), {
-    ...category,
-    createdAt: new Date(),
+    ...category
   });
 }
 

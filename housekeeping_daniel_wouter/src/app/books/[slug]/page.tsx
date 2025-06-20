@@ -7,11 +7,12 @@ import { listenToBook } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
 import Loading from "@/app/loading";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import {
   addTransaction,
   listenToTransactions,
 } from "@/services/transaction.service";
+import { getCategories } from "@/services/category.service";
 import BookDetails from "@/app/books/[slug]/BookDetails";
 import BookNotFound from "@/app/books/[slug]/BookNotFound";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
@@ -73,7 +74,6 @@ export default function BookPage() {
   if (!book) {
     return <BookNotFound />;
   }
-
   return (
   <div className="flex flex-col md:flex-row gap-6">
     <div className="flex-grow w-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">

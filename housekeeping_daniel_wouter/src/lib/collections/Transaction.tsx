@@ -7,4 +7,5 @@ export default interface Transaction {
   amount: number;
   type: "income" | "expense";
   date: Timestamp;
+  categoryId: string | null;
 }
