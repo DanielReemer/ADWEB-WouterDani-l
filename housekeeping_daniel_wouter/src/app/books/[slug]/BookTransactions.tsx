@@ -51,7 +51,6 @@ export default function BookTransactions({
     selectedDate.year
   );
 
-  filtered = filterTransactionsByCategory(filtered, selectedCategory);
 
   const income = filtered
     .filter((t) => t.type === "income")
@@ -60,6 +59,8 @@ export default function BookTransactions({
   const expense = filtered
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
+
+  filtered = filterTransactionsByCategory(filtered, selectedCategory);
 
   const handleSave = async (transaction: TransactionFormData) => {
     await onSave(transaction);
