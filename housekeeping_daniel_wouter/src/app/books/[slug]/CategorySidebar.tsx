@@ -19,13 +19,13 @@ export default function CategorySidebar() {
 
   useEffect(() => {
     if (!slug) return;
-    const unsub = getCategories(user.uid, slug, setCategories);
+    const unsub = getCategories(slug, setCategories);
     return () => unsub();
-  }, [user.uid, slug]);
+  }, [slug]);
 
   const handleAdd = async () => {
     if (!name || budget <= 0) return;
-    await addCategory({ name, budget, userId: user.uid, bookId: slug });
+    await addCategory({ name, budget, bookId: slug });
     setName("");
     setBudget(0);
   };
@@ -41,7 +41,7 @@ export default function CategorySidebar() {
       <div className="flex flex-col gap-2 mb-4">
         <input
           type="text"
-          placeholder="Naam"
+          placeholder="Categorie Naam"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="border p-2 rounded"

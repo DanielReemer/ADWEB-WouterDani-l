@@ -14,19 +14,16 @@ export interface Category {
   id?: string;
   name: string;
   budget: number;
-  userId: string;
   bookId: string;
   createdAt?: Date;
 }
 
 export function getCategories(
-  userId: string,
   bookId: string,
   setCategories: (categories: Category[]) => void
 ) {
   const q = query(
     collection(db, "categories"),
-    where("userId", "==", userId),
     where("bookId", "==", bookId)
   );
 
