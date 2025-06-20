@@ -72,6 +72,7 @@ jest.mock("@/app/books/[slug]/BookTransactions", () => ({
             date: {},
             bookId: "b",
             userId: "u",
+            categoryId: "cat",
           })
         }
       >
