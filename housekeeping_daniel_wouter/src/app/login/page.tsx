@@ -1,19 +1,16 @@
 "use client";
 
-import {  useState } from "react";
-import {
-  useSignInWithEmailAndPassword,
-} from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "@/services/auth.service";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
   const router = useRouter();
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -24,7 +21,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await signInWithEmailAndPassword(email, password);
+      const response = await signIn(email, password);
 
       if (!response || !response.user) {
         setError("Inloggen mislukt: Ongeldige gebruikersgegevens.");
@@ -32,9 +29,7 @@ export default function LoginPage() {
       }
 
       router.push("/");
-    } catch (error: unknown) {
-      console.error("Login error:", error);
-      
+    } catch {
       setError(
         "Er is een fout opgetreden bij het inloggen. Probeer het opnieuw."
       );

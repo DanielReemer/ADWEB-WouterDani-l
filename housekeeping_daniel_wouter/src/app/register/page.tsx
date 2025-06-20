@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signUp } from "@/services/auth.service";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -14,9 +13,8 @@ export default function SignupPage() {
   });
   const [error, setError] = useState<string | null>("");
   const [success, setSuccess] = useState("");
-  const [createUserWithEmailAndPassword] =
-    useCreateUserWithEmailAndPassword(auth);
   const router = useRouter();
+
   const resetForm = () => {
     setForm({ email: "", password: "", confirmPassword: "" });
   };
@@ -44,10 +42,7 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await createUserWithEmailAndPassword(
-        form.email,
-        form.password
-      );
+      const response = await signUp(form.email, form.password);
 
       if (!response || !response.user) {
         setError("Account aanmaken mislukt. Probeer het opnieuw.");
@@ -55,8 +50,7 @@ export default function SignupPage() {
       }
 
       router.push("/");
-    } catch (error: unknown) {
-      console.error("Signup error:", error);
+    } catch {
       setError(
         "Er is een fout opgetreden bij het aanmaken van het account. Probeer het opnieuw."
       );

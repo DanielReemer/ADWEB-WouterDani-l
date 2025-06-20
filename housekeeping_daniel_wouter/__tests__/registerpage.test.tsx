@@ -1,25 +1,24 @@
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import SignupPage from "@/app/register/page";
-import {
-  useCreateUserWithEmailAndPassword,
-  useAuthState,
-} from "react-firebase-hooks/auth";
+import * as authService from "@/services/auth.service";
 import { useRouter } from "next/navigation";
 
-jest.mock("react-firebase-hooks/auth");
+jest.mock("@/services/auth.service", () => ({
+  signUp: jest.fn(),
+}));
+
+jest.mock("@/lib/firebase", () => ({
+  auth: {},
+}));
+
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
-}));
-jest.mock("@/lib/firebase", () => ({
-  auth: {
-    createUserWithEmailAndPassword: jest.fn(),
-  },
 }));
 
 describe("SignupPage", () => {
   const mockPush = jest.fn();
-  const mockCreateUser = jest.fn();
+  const mockSignUp = authService.signUp as jest.Mock;
 
   let consoleErrorSpy: jest.SpyInstance;
   let consoleLogSpy: jest.SpyInstance;
@@ -40,13 +39,6 @@ describe("SignupPage", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-    (useCreateUserWithEmailAndPassword as jest.Mock).mockReturnValue([
-      mockCreateUser,
-      false,
-      null,
-      null,
-    ]);
-    (useAuthState as jest.Mock).mockReturnValue([null, false, null]);
   });
 
   it("renders the signup form correctly", () => {
@@ -83,8 +75,8 @@ describe("SignupPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("calls createUserWithEmailAndPassword and redirects on successful signup", async () => {
-    mockCreateUser.mockResolvedValue({ user: { uid: "abc123" } });
+  it("calls signUp and redirects on successful signup", async () => {
+    mockSignUp.mockResolvedValue({ user: { uid: "abc123" } });
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
       target: { value: "test@example.com" },
@@ -98,7 +90,7 @@ describe("SignupPage", () => {
     fireEvent.submit(screen.getByRole("button", { name: /account aanmaken/i }));
 
     await waitFor(() => {
-      expect(mockCreateUser).toHaveBeenCalledWith(
+      expect(mockSignUp).toHaveBeenCalledWith(
         "test@example.com",
         "password123"
       );
@@ -106,8 +98,8 @@ describe("SignupPage", () => {
     });
   });
 
-  it("shows error if createUserWithEmailAndPassword returns no user", async () => {
-    mockCreateUser.mockResolvedValue(null);
+  it("shows error if signUp returns no user", async () => {
+    mockSignUp.mockResolvedValue(null);
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
       target: { value: "test@example.com" },
@@ -128,8 +120,8 @@ describe("SignupPage", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("shows error if createUserWithEmailAndPassword throws an error", async () => {
-    mockCreateUser.mockRejectedValue(new Error("Firebase error"));
+  it("shows error if signUp throws an error", async () => {
+    mockSignUp.mockRejectedValue(new Error("Firebase error"));
     render(<SignupPage />);
     fireEvent.change(screen.getByLabelText(/e-mailadres/i), {
       target: { value: "test@example.com" },
