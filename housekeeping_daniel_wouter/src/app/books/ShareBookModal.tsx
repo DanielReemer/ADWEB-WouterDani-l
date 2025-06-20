@@ -19,15 +19,41 @@ export default function ShareBookModal({
   success,
   bookName,
 }: Props) {
-  const [emails, setEmails] = useState<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [emails, setEmails] = useState<string[]>([""]);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     if (open) {
-      setEmails("");
-      setTimeout(() => inputRef.current?.focus(), 10);
+      setEmails([""]);
+      setTimeout(() => inputRefs.current[0]?.focus(), 10);
     }
   }, [open]);
+
+  const handleEmailChange = (index: number, value: string) => {
+    setEmails((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
+
+  const handleAddField = () => {
+    setEmails((prev) => [...prev, ""]);
+    setTimeout(() => inputRefs.current[emails.length]?.focus(), 10);
+  };
+
+  const handleRemoveField = (index: number) => {
+    setEmails((prev) =>
+      prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
+    );
+    setTimeout(() => inputRefs.current[Math.max(0, index - 1)]?.focus(), 10);
+  };
+
+  const canSubmit =
+    emails.some((e) => e.trim()) &&
+    emails.every((e) => e.trim() !== "") &&
+    !loading &&
+    !success;
 
   if (!open) return null;
 
@@ -48,36 +74,61 @@ export default function ShareBookModal({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!loading && emails.trim()) {
-              onSubmit(
-                emails
-                  .split(/[,;\s]+/)
-                  .map((e) => e.trim())
-                  .filter(Boolean)
-              );
+            if (canSubmit) {
+              onSubmit(emails.map((e) => e.trim()).filter(Boolean));
             }
           }}
           className="flex flex-col gap-4"
         >
           <label className="flex flex-col gap-1">
             <span className="text-sm text-gray-700">Nodig uit per e-mail</span>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Voer e-mailadres(sen) in, gescheiden door komma's"
-              className="border rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              disabled={loading || !!success}
-              autoFocus
-            />
+            <div className="flex flex-col gap-2">
+              {emails.map((email, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input
+                    ref={(el) => {
+                      inputRefs.current[idx] = el;
+                    }}
+                    type="email"
+                    placeholder="E-mailadres"
+                    className="border rounded px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1"
+                    value={email}
+                    onChange={(e) => handleEmailChange(idx, e.target.value)}
+                    disabled={loading || !!success}
+                    autoFocus={idx === 0}
+                  />
+                  {emails.length > 1 && (
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-red-600 text-lg px-1"
+                      onClick={() => handleRemoveField(idx)}
+                      disabled={loading || !!success}
+                      aria-label="Verwijder veld"
+                    >
+                      −
+                    </button>
+                  )}
+                  {idx === emails.length - 1 && (
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-green-600 text-lg px-1"
+                      onClick={handleAddField}
+                      disabled={loading || !!success}
+                      aria-label="Voeg veld toe"
+                    >
+                      +
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </label>
           {error && <div className="text-red-600 text-sm">{error}</div>}
           {success && <div className="text-green-600 text-sm">{success}</div>}
           <button
             type="submit"
             className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition disabled:opacity-60"
-            disabled={loading || !!success || !emails.trim()}
+            disabled={!canSubmit}
           >
             {loading ? "Versturen..." : "Uitnodigen"}
           </button>
