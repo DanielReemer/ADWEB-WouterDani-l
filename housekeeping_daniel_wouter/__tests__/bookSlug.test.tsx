@@ -100,6 +100,7 @@ const transactions: Transaction[] = [
     amount: 10,
     type: "income",
     date: {} as any,
+    categoryId: "cat1",
   },
   {
     id: "t2",
@@ -109,6 +110,7 @@ const transactions: Transaction[] = [
     amount: 5,
     type: "expense",
     date: {} as any,
+    categoryId: "cat2",
   },
 ];
 
