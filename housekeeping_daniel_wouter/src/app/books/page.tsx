@@ -10,6 +10,7 @@ import { listenToTransactions } from "@/services/transaction.service";
 import Transaction from "@/lib/Transaction";
 import { calculateBalance } from "@/lib/utils/calculateBalance";
 import ShareBookModal from "@/app/books/ShareBookModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 type SharedBook = Book & { ownerId: string };
 
@@ -165,15 +166,37 @@ export default function BookPage() {
           );
         }}
       </BookList>
-      <ShareBookModal
-        open={shareModalOpen}
-        onClose={closeShareModal}
-        onSubmit={handleShareSubmit}
-        loading={shareLoading}
-        error={shareError}
-        success={shareSuccess}       
-        bookName={shareBook?.name}
-      />
+      <AnimatePresence>
+        {shareModalOpen && (
+          <motion.div
+            key="share-modal"
+            initial={{ opacity: 0, y: 32, scale: 0.97 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              transition: { duration: 0.32, ease: [0.36, 0.66, 0.04, 1] },
+            }}
+            exit={{
+              opacity: 0,
+              y: 32,
+              scale: 0.97,
+              transition: { duration: 0.2, ease: [0.36, 0.66, 0.04, 1] },
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          >
+            <ShareBookModal
+              open
+              onClose={closeShareModal}
+              onSubmit={handleShareSubmit}
+              loading={shareLoading}
+              error={shareError}
+              success={shareSuccess}
+              bookName={shareBook?.name}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
