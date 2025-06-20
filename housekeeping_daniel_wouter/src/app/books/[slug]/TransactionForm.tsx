@@ -68,8 +68,12 @@ export default function TransactionForm({
 
     if (!amount || amount <= 0) return alert("Voer een geldig bedrag in.");
     if (!date) return alert("Kies een geldige datum.");
+    if(type == "income" && categoryId) {
+      return alert("Inkomsten mogen geen categorie hebben.");
+    }
 
     setSaving(true);
+   
 
     const transaction: TransactionFormData = {
       amount,

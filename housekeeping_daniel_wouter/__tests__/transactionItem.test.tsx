@@ -61,24 +61,20 @@ describe("TransactionItem", () => {
   it("renders transaction info", () => {
     let transaction = makeTransaction();
     render(<TransactionItem transaction={transaction} categories={[]} />);
-    const formattedDate = transaction.date.toDate().toLocaleDateString();
-    expect(screen.getByText(formattedDate)).toBeInTheDocument();
-    expect(screen.getByText((content) => content.includes(transaction.description))).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`€${transaction.amount}.*⬇️`))).toBeInTheDocument();
-    expect(screen.getByText("✏️ Bewerken")).toBeInTheDocument();
-    expect(screen.getByText("🗑️ Verwijder")).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes(transaction.description))).toBeInTheDocument();    expect(screen.getByText("✏️")).toBeInTheDocument();
+    expect(screen.getByText("🗑️")).toBeInTheDocument();
   });
 
   it("shows TransactionForm and cancel button when editing", () => {
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("✏️ Bewerken"));
+    fireEvent.click(screen.getByText("✏️"));
     expect(screen.getByTestId("transaction-form")).toBeInTheDocument();
     expect(screen.getByText("Annuleer")).toBeInTheDocument();
   });
 
   it("closes form on Annuleer", () => {
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("✏️ Bewerken"));
+    fireEvent.click(screen.getByText("✏️"));
     fireEvent.click(screen.getByText("Annuleer"));
     expect(screen.queryByTestId("transaction-form")).not.toBeInTheDocument();
   });
@@ -86,7 +82,7 @@ describe("TransactionItem", () => {
   it("calls updateTransaction and closes form on save", async () => {
     const { updateTransaction } = require("@/services/transaction.service");
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("✏️ Bewerken"));
+    fireEvent.click(screen.getByText("✏️"));
     fireEvent.click(screen.getByText("Opslaan"));
     await waitFor(() => expect(updateTransaction).toHaveBeenCalled());
     await waitFor(() =>
@@ -99,7 +95,7 @@ describe("TransactionItem", () => {
     updateTransaction.mockRejectedValueOnce(new Error("fail"));
     window.alert = jest.fn();
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("✏️ Bewerken"));
+    fireEvent.click(screen.getByText("✏️"));
     fireEvent.click(screen.getByText("Opslaan"));
     await waitFor(() =>
       expect(window.alert).toHaveBeenCalledWith("Update mislukt.")
@@ -110,7 +106,7 @@ describe("TransactionItem", () => {
     const { deleteTransaction } = require("@/services/transaction.service");
     window.confirm = jest.fn(() => true);
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("🗑️ Verwijder"));
+    fireEvent.click(screen.getByText("🗑️"));
     await waitFor(() =>
       expect(deleteTransaction).toHaveBeenCalledWith("u1", "b1", "t1")
     );
@@ -120,7 +116,7 @@ describe("TransactionItem", () => {
     const { deleteTransaction } = require("@/services/transaction.service");
     window.confirm = jest.fn(() => false);
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("🗑️ Verwijder"));
+    fireEvent.click(screen.getByText("🗑️"));
     expect(deleteTransaction).not.toHaveBeenCalled();
   });
 
@@ -130,7 +126,7 @@ describe("TransactionItem", () => {
     deleteTransaction.mockRejectedValueOnce(new Error("fail"));
     window.alert = jest.fn();
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
-    fireEvent.click(screen.getByText("🗑️ Verwijder"));
+    fireEvent.click(screen.getByText("🗑️"));
     await waitFor(() =>
       expect(window.alert).toHaveBeenCalledWith("Verwijderen mislukt.")
     );

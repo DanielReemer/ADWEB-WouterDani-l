@@ -74,17 +74,19 @@ export default function BookPage() {
     return <BookNotFound />;
   }
   return (
-  <div className="flex flex-col md:flex-row gap-6">
-    <div className="flex-grow w-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-      <BookDetails book={book} balance={balance}/>
-      <BookTransactions
-        transactions={transactions}
-        loading={transactionsLoading}
-        error={error}
-        onSave={handleSaveTransaction}
-      />
+    <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex-grow w-full max-w-3xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+        <BookDetails book={book} balance={balance} />
+        <BookTransactions
+          transactions={transactions}
+          loading={transactionsLoading}
+          error={error}
+          onSave={handleSaveTransaction}
+        />
+      </div>
+      <div className="md:w-72 w-full">
+        <CategorySidebar transactions={transactions} />
+      </div>
     </div>
-    <CategorySidebar />
-  </div>
   );
 }
