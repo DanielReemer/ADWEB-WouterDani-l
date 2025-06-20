@@ -106,6 +106,7 @@ describe("transaction service firestore wrappers", () => {
           amount: 100,
           type: "income",
           date: "date1",
+          categoryId: null,
         },
         {
           id: "t2",
@@ -115,6 +116,7 @@ describe("transaction service firestore wrappers", () => {
           amount: 50,
           type: "expense",
           date: "date2",
+          categoryId: null,
         },
       ]);
       expect(unsub).toBe("unsub");
@@ -195,6 +197,7 @@ describe("transaction service firestore wrappers", () => {
         amount: 42,
         type: "income",
         date: "date1",
+        categoryId: null,
       });
       expect(unsub).toBe("unsub");
     });
@@ -231,6 +234,7 @@ describe("transaction service firestore wrappers", () => {
         amount: 21,
         type: "expense",
         date: actualFirestore.Timestamp.fromDate(new Date()),
+        categoryId: null,
       };
 
       collectionMock.mockReturnValue("colRef");
@@ -253,6 +257,7 @@ describe("transaction service firestore wrappers", () => {
         amount: transaction.amount,
         type: transaction.type,
         date: transaction.date,
+        categoryId: transaction.categoryId,
       });
     });
   });

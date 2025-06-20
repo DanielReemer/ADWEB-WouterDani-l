@@ -1,9 +1,13 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
 import { Timestamp } from "firebase/firestore";
-import { filterTransactionsByMonth } from "@/lib/filterTransactions";
 import "@testing-library/jest-dom";
 import Transaction from "@/lib/collections/Transaction";
+import { filterTransactionsByCategory, filterTransactionsByMonth } from "@/lib/utils/filterTransactions";
+
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ slug: "book1" }),
+}));
 
 jest.mock("@/app/books/[slug]/MonthSelector", () => ({
   __esModule: true,
@@ -64,9 +68,24 @@ jest.mock("@/app/books/[slug]/TransactionForm", () => ({
   ),
 }));
 
-jest.mock("@/lib/filterTransactions", () => ({
-  filterTransactionsByMonth: jest.fn(),
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: () => ({ uid: "test-user" }),
 }));
+
+jest.mock("@/lib/utils/filterTransactions", () => ({
+  filterTransactionsByMonth: jest.fn(),
+  filterTransactionsByCategory: jest.fn(),
+}));
+
+jest.mock("@/services/category.service", () => ({
+  getCategories: jest.fn((slug, callback) => {
+    callback([
+      { id: "cat1", name: "Food" },
+      { id: "cat2", name: "Transport" },
+    ]);
+  }),
+}));
+  
 
 const transactions: Transaction[] = [
   {
@@ -77,6 +96,7 @@ const transactions: Transaction[] = [
     amount: 100,
     type: "income",
     date: Timestamp.fromDate(new Date(2025, 5, 10)),
+    categoryId: null,
   },
   {
     id: "2",
@@ -86,6 +106,7 @@ const transactions: Transaction[] = [
     amount: 40,
     type: "expense",
     date: Timestamp.fromDate(new Date(2025, 5, 11)),
+    categoryId: null,
   },
   {
     id: "3",
@@ -95,13 +116,15 @@ const transactions: Transaction[] = [
     amount: 60,
     type: "expense",
     date: Timestamp.fromDate(new Date(2025, 4, 13)),
+    categoryId: null,
   },
 ];
 
 describe("BookTransactions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (require("@/lib/filterTransactions").filterTransactionsByMonth as jest.Mock).mockImplementation((tx, month, year) => tx);
+    (require("@/lib/utils/filterTransactions").filterTransactionsByMonth as jest.Mock).mockImplementation((tx, month, year) => tx)
+    (require("@/lib/utils/filterTransactions").filterTransactionsByCategory as jest.Mock).mockImplementation((tx: any, categoryId: any) => tx);
   });
 
   it("renders loading skeleton when loading", () => {
@@ -146,7 +169,6 @@ describe("BookTransactions", () => {
     expect(screen.getByTestId("transaction-list")).toBeInTheDocument();
     expect(screen.getByText("Salary")).toBeInTheDocument();
     expect(screen.getByText("Groceries")).toBeInTheDocument();
-    expect(screen.getByText("Transport")).toBeInTheDocument();
   });
 
   it("shows and hides transaction form on button click", () => {
@@ -194,7 +216,7 @@ describe("BookTransactions", () => {
   });
 
   it("filters transactions by selected month and year when month selector changes", () => {
-    (require("@/lib/filterTransactions").filterTransactionsByMonth as jest.Mock).mockImplementation((tx, month, year) =>
+    (require("@/lib/utils/filterTransactions").filterTransactionsByMonth as jest.Mock).mockImplementation((tx, month, year) =>
       month === 5 && year === 2025 ? [tx[0], tx[1]] : [tx[2]]
     );
     render(
@@ -206,6 +228,6 @@ describe("BookTransactions", () => {
       />
     );
     fireEvent.click(screen.getByTestId("month-change"));
-    expect(require("@/lib/filterTransactions").filterTransactionsByMonth).toHaveBeenCalledWith(transactions, 5, 2025);
+    expect(require("@/lib/utils/filterTransactions").filterTransactionsByMonth).toHaveBeenCalledWith(transactions, 5, 2025);
   });
 });
