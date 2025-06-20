@@ -3,24 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase";
 import Loading from "@/app/loading";
-import { useSignOut } from "react-firebase-hooks/auth";
+import { signOut } from "@/services/auth.service";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [signOut] = useSignOut(auth);
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleMenu = () => setMenuOpen((open) => !open);
 
   const handleLogout = async () => {
     setError(null);
     try {
       await signOut();
-    } catch (error: unknown) {
-      console.error("Logout failed:", error);
+    } catch {
       setError("Uitloggen mislukt. Probeer het opnieuw of ververs de pagina.");
     }
   };
@@ -41,14 +38,12 @@ export default function Navbar() {
           >
             Home
           </Link>
-
           <Link
             href="/books"
             className="text-gray-700 hover:text-blue-600 transition"
           >
             Boeken
           </Link>
-
           {!loading &&
             (user ? (
               <>
@@ -131,14 +126,12 @@ export default function Navbar() {
           <Link href="/" className="block text-gray-700 hover:text-blue-600">
             Home
           </Link>
-
           <Link
             href="/books"
             className="block text-gray-700 hover:text-blue-600"
           >
             Boeken
           </Link>
-
           {!loading &&
             (user ? (
               <>

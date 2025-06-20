@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import "@testing-library/jest-dom";
-import "@testing-library/react";
 
-jest.mock("react-firebase-hooks/auth", () => ({
-  useAuthState: jest.fn(() => [null, false, undefined]),
+jest.mock("firebase/auth", () => ({
+  onAuthStateChanged: jest.fn((auth, cb, errCb) => {
+    cb(null);
+    return () => {};
+  }),
 }));
+
 jest.mock("@/lib/firebase", () => ({
   auth: {},
 }));
