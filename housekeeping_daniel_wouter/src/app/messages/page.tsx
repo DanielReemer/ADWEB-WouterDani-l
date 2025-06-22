@@ -4,9 +4,16 @@ import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import { listenToShareInvitations } from "@/services/message.service";
 import MessageCenterInvitationList from "@/app/messages/MessageInvitationList";
 
+type Invitation = {
+  id: string;
+  bookId: string;
+  bookName: string;
+  ownerId: string;
+  };
+
 export default function MessageCenterPage() {
   const user = useRequireUser();
-  const [invitations, setInvitations] = useState<unknown[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
 
   useEffect(() => {
     if (!user.email) return;

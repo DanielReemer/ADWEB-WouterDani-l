@@ -7,9 +7,16 @@ import {
   Unsubscribe,
 } from "firebase/firestore";
 
+type Invitation = {
+  id: string;
+  bookId: string;
+  bookName: string;
+  ownerId: string;
+  };
+
 export function listenToShareInvitations(
   email: string,
-  listener: (invitations: unknown[]) => void
+  listener: (invitations: Invitation[]) => void
 ): Unsubscribe {
   return onSnapshot(
     query(
@@ -18,9 +25,15 @@ export function listenToShareInvitations(
       where("status", "==", "pending")
     ),
     (snapshot) => {
-      const invitations: unknown[] = [];
+      const invitations: Invitation[] = [];
       snapshot.forEach((docSnap) => {
-        invitations.push({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        invitations.push({
+          id: docSnap.id,
+          bookId: data.bookId || "",
+          bookName: data.bookName || "",
+          ownerId: data.ownerId || "",
+        });
       });
       listener(invitations);
     }
