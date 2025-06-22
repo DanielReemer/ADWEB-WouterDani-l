@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import TransactionList from "@/app/books/[slug]/TransactionList";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import "@testing-library/jest-dom";
 
 jest.mock("@/app/books/[slug]/TransactionItem", () => ({
@@ -23,11 +23,12 @@ const makeTransaction = (overrides?: Partial<Transaction>): Transaction => ({
   type: "income",
   date: mockTimestamp,
   ...overrides,
+  categoryId: null,
 });
 
 describe("TransactionList", () => {
   it("renders empty state when no transactions", () => {
-    render(<TransactionList transactions={[]} />);
+    render(<TransactionList transactions={[]} categories={[]} />);
     expect(
       screen.getByText("Geen transacties deze maand.")
     ).toBeInTheDocument();
@@ -38,7 +39,7 @@ describe("TransactionList", () => {
       makeTransaction({ id: "1", description: "First" }),
       makeTransaction({ id: "2", description: "Second" }),
     ];
-    render(<TransactionList transactions={transactions} />);
+    render(<TransactionList transactions={transactions} categories={[]} />);
     const items = screen.getAllByTestId("transaction-item");
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent("First");

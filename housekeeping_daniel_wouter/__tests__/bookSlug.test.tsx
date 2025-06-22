@@ -14,7 +14,7 @@ import {
   addTransaction as mockAddTransaction,
 } from "@/services/transaction.service";
 import { Book } from "@/lib/collections/Book";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import "@testing-library/jest-dom";
 
 jest.mock("next/navigation", () => ({
@@ -72,6 +72,7 @@ jest.mock("@/app/books/[slug]/BookTransactions", () => ({
             date: {},
             bookId: "b",
             userId: "u",
+            categoryId: "cat",
           })
         }
       >
@@ -100,6 +101,7 @@ const transactions: Transaction[] = [
     amount: 10,
     type: "income",
     date: {} as any,
+    categoryId: "cat1",
   },
   {
     id: "t2",
@@ -109,6 +111,7 @@ const transactions: Transaction[] = [
     amount: 5,
     type: "expense",
     date: {} as any,
+    categoryId: "cat2",
   },
 ];
 

@@ -7,7 +7,7 @@ import { listenToBook } from "@/services/book.service";
 import { Book } from "@/lib/collections/Book";
 import Loading from "@/app/loading";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
-import Transaction from "@/lib/Transaction";
+import Transaction from "@/lib/collections/Transaction";
 import {
   addTransaction,
   listenToTransactions,
@@ -16,6 +16,7 @@ import BookDetails from "@/app/books/[slug]/BookDetails";
 import BookNotFound from "@/app/books/[slug]/BookNotFound";
 import BookTransactions from "@/app/books/[slug]/BookTransactions";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
+import CategorySidebar from "./CategorySidebar";
 import { calculateBalance } from "@/lib/utils/calculateBalance";
 
 export default function BookPage() {
@@ -72,16 +73,20 @@ export default function BookPage() {
   if (!book) {
     return <BookNotFound />;
   }
-
   return (
-    <div className="w-full h-full max-w-xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-      <BookDetails book={book} balance={balance}/>
-      <BookTransactions
-        transactions={transactions}
-        loading={transactionsLoading}
-        error={error}
-        onSave={handleSaveTransaction}
-      />
+    <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex-grow w-full max-w-3xl flex flex-col gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+        <BookDetails book={book} balance={balance} />
+        <BookTransactions
+          transactions={transactions}
+          loading={transactionsLoading}
+          error={error}
+          onSave={handleSaveTransaction}
+        />
+      </div>
+      <div className="md:w-72 w-full">
+        <CategorySidebar transactions={transactions} />
+      </div>
     </div>
   );
 }

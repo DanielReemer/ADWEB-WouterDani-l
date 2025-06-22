@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MonthSelector from "@/app/books/[slug]/MonthSelector";
 import Statistics from "@/app/books/[slug]/Statistics";
 import TransactionList from "@/app/books/[slug]/TransactionList";
 import SkeletonTransactionList from "@/app/ui/SkeletonTransactionList";
 import TransactionForm from "@/app/books/[slug]/TransactionForm";
-import { filterTransactionsByMonth } from "@/lib/filterTransactions";
-import Transaction from "@/lib/Transaction";
+import { filterTransactionsByCategory, filterTransactionsByMonth } from "@/lib/utils/filterTransactions";
+import Transaction from "@/lib/collections/Transaction";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
+import { Category } from "@/lib/collections/Category";
+import { getCategories } from "@/services/category.service";
+import { useParams } from "next/navigation";
+import CategoryFilter from "./CategoryFilter";
 
 type BookTransactionsProps = {
   transactions: Transaction[];
@@ -27,13 +31,24 @@ export default function BookTransactions({
     month: new Date().getMonth(),
     year: new Date().getFullYear(),
   });
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  const filtered = filterTransactionsByMonth(
+  const { slug } = useParams<{ slug: string }>();
+
+  useEffect(() => {
+    if (slug) {
+      getCategories(slug, setCategories);
+    }
+  }, [slug]);
+
+  let filtered = filterTransactionsByMonth(
     transactions,
     selectedDate.month,
     selectedDate.year
   );
+
 
   const income = filtered
     .filter((t) => t.type === "income")
@@ -42,6 +57,8 @@ export default function BookTransactions({
   const expense = filtered
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
+
+  filtered = filterTransactionsByCategory(filtered, selectedCategory);
 
   const handleSave = async (transaction: TransactionFormData) => {
     await onSave(transaction);
@@ -61,14 +78,21 @@ export default function BookTransactions({
           >
             {showForm ? "Annuleer" : "Nieuwe transactie"}
           </button>
-          {showForm && <TransactionForm onSave={handleSave} />}
+          {showForm && (
+            <TransactionForm onSave={handleSave} categories={categories} />
+          )}
           <MonthSelector
             selectedMonth={selectedDate.month}
             selectedYear={selectedDate.year}
             onChange={setSelectedDate}
           />
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onChange={setSelectedCategory}
+          />
           <Statistics income={income} expense={expense} />
-          <TransactionList transactions={filtered} />
+          <TransactionList transactions={filtered} categories={categories} />
         </>
       )}
     </div>

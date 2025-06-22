@@ -10,7 +10,7 @@ import {
     Unsubscribe,
   } from "firebase/firestore";
   import { db } from "@/lib/firebase";
-  import Transaction from "@/lib/Transaction";
+  import Transaction from "@/lib/collections/Transaction";
   
   /**
    * Listen to realtime updates for all transactions.
@@ -40,6 +40,7 @@ import {
           amount: data.amount || 0,
           type: data.type || "",
           date: data.date,
+          categoryId: data.categoryId || null,
         });
       });
       listener(transactions);
@@ -82,6 +83,7 @@ import {
                 amount: data.amount || 0,
                 type: data.type || "",
                 date: data.date,
+                categoryId: data.categoryId || null,
               }
             : null
         );
@@ -107,6 +109,7 @@ import {
       amount: transaction.amount,
       type: transaction.type,
       date: transaction.date,
+      categoryId: transaction.categoryId || null,
     });
   }
   
@@ -123,7 +126,6 @@ import {
     transactionId: string,
     transaction: Partial<Transaction>
   ): Promise<void> {
-    console.log("Updating transaction", transactionId, transaction);
     await updateDoc(
       doc(db, "users", userId, "books", bookId, "transactions", transactionId),
       {
