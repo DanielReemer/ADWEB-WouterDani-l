@@ -43,6 +43,8 @@ export default function TransactionForm({
   );
   const [saving, setSaving] = useState(false);
 
+  console.log("Current categoryId:", categoryId);
+
   /** Synchroniseer bij openen in bewerk-modus */
   useEffect(() => {
     if (initialTransaction) {
@@ -73,7 +75,6 @@ export default function TransactionForm({
     }
 
     setSaving(true);
-   
 
     const transaction: TransactionFormData = {
       amount,
@@ -82,7 +83,7 @@ export default function TransactionForm({
       date: Timestamp.fromDate(date),
       categoryId: categoryId || null,
     };
-
+    console.log("Transaction to save:", transaction);
     onSave(transaction)
       .then(() => !initialTransaction && resetForm())
       .catch(() => alert("Er is iets misgegaan bij het opslaan van de transactie."))

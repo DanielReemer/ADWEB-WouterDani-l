@@ -133,7 +133,24 @@ import {
       }
     );
   }
-  
+
+  /**
+   * Update the category of a transaction.
+   * @param transaction The transaction to update
+   * @param newCategoryId The ID of the new category
+   */
+  export async function updateTransactionCategory(
+    transaction: Transaction,
+    newCategoryId: string
+  ): Promise<void> {
+    await updateTransaction(
+      transaction.userId,
+      transaction.bookId,
+      transaction.id,
+      { categoryId: newCategoryId }
+    );
+  }
+
   /**
    * Delete a transaction from a book.
    * @param userId The user's ID

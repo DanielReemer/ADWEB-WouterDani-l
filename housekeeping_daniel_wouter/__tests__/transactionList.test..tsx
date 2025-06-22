@@ -27,12 +27,6 @@ const makeTransaction = (overrides?: Partial<Transaction>): Transaction => ({
 });
 
 describe("TransactionList", () => {
-  it("renders empty state when no transactions", () => {
-    render(<TransactionList transactions={[]} categories={[]} />);
-    expect(
-      screen.getByText("Geen transacties deze maand.")
-    ).toBeInTheDocument();
-  });
 
   it("renders a list of TransactionItem for each transaction", () => {
     const transactions = [

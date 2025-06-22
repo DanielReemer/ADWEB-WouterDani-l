@@ -31,7 +31,9 @@ export function getCategories(
 
 export function addCategory(category: Category) {
   return addDoc(collection(db, "categories"), {
-    ...category
+    name: category.name,
+    budget: category.budget,
+    bookId: category.bookId,
   });
 }
 
