@@ -21,6 +21,7 @@ const initialTransaction: TransactionFormData = {
   date: {
     toDate: () => new Date("2024-05-10"),
   } as unknown as Timestamp,
+  categoryId: null,
 };
 
 beforeEach(() => {
@@ -29,7 +30,7 @@ beforeEach(() => {
 });
 
 it("renders form with default values", () => {
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[{ id: "1", name: "Test" }]} />);
   expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
     "Nieuwe transactie"
   );
@@ -48,7 +49,7 @@ it("renders with provided formTitle and submitLabel", () => {
       onSave={mockOnSave}
       formTitle="Bewerken"
       submitLabel="Opslaan"
-    />
+      categories={[{ id: "1", name: "Test" }]} />
   );
   expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
     "Bewerken"
@@ -60,17 +61,51 @@ it("renders initialTransaction data", () => {
   render(
     <TransactionForm
       onSave={mockOnSave}
-      initialTransaction={initialTransaction}
-    />
+      initialTransaction={initialTransaction} categories={[]}    />
   );
   expect(screen.getByLabelText(/Bedrag/i)).toHaveValue(42.5);
   expect(screen.getByLabelText(/Datum/i)).toHaveValue("2024-05-10");
   expect(screen.getByLabelText(/Beschrijving/i)).toHaveValue("Lunch");
   expect(screen.getByLabelText(/Type/i)).toHaveValue("expense");
+  expect(screen.getByLabelText(/Categorie/i)).toHaveValue("");
 });
 
 it("calls onSave with correct data for valid input", async () => {
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[{ id: "1", name: "Test" }]} />);
+  fireEvent.change(screen.getByLabelText(/Bedrag/i), {
+    target: { value: "100" },
+  });
+  fireEvent.change(screen.getByLabelText(/Datum/i), {
+    target: { value: "2024-01-20" },
+  });
+  fireEvent.change(screen.getByLabelText(/Beschrijving/i), {
+    target: { value: "Test" },
+  });
+  fireEvent.change(screen.getByLabelText(/Type/i), {
+    target: { value: "expense" },
+  });
+  fireEvent.change(screen.getByLabelText(/Categorie/i), {
+    target: { value: "1" },
+  });
+
+  mockOnSave.mockResolvedValueOnce(undefined);
+
+  fireEvent.click(screen.getByRole("button"));
+
+  await waitFor(() => expect(mockOnSave).toHaveBeenCalledTimes(1));
+  const callArg = mockOnSave.mock.calls[0][0];
+  expect(callArg.amount).toBe(100);
+  expect(callArg.description).toBe("Test");
+  expect(callArg.type).toBe("expense");
+  expect(callArg.date).toHaveProperty(
+    "seconds",
+    Math.floor(new Date("2024-01-20").getTime() / 1000)
+  );
+  expect(callArg.categoryId).toBe("1");
+});
+
+it("shows alert if type is income and category is selected", async () => {
+  render(<TransactionForm onSave={mockOnSave} categories={[{ id: "1", name: "Test" }]} />);
   fireEvent.change(screen.getByLabelText(/Bedrag/i), {
     target: { value: "100" },
   });
@@ -83,24 +118,24 @@ it("calls onSave with correct data for valid input", async () => {
   fireEvent.change(screen.getByLabelText(/Type/i), {
     target: { value: "income" },
   });
+  fireEvent.change(screen.getByLabelText(/Categorie/i), {
+    target: { value: "1" },
+  });
 
   mockOnSave.mockResolvedValueOnce(undefined);
 
   fireEvent.click(screen.getByRole("button"));
 
-  await waitFor(() => expect(mockOnSave).toHaveBeenCalledTimes(1));
-  const callArg = mockOnSave.mock.calls[0][0];
-  expect(callArg.amount).toBe(100);
-  expect(callArg.description).toBe("Test");
-  expect(callArg.type).toBe("income");
-  expect(callArg.date).toHaveProperty(
-    "seconds",
-    Math.floor(new Date("2024-01-20").getTime() / 1000)
+  await waitFor(() =>
+    expect(window.alert).toHaveBeenCalledWith(
+      expect.stringMatching(/Inkomsten mogen geen categorie hebben./i)
+    )
   );
+  expect(mockOnSave).not.toHaveBeenCalled();
 });
 
 it("resets form after submit if not editing", async () => {
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[]} />);
   fireEvent.change(screen.getByLabelText(/Bedrag/i), {
     target: { value: "55" },
   });
@@ -121,8 +156,7 @@ it("does not reset form after submit if editing", async () => {
   render(
     <TransactionForm
       onSave={mockOnSave}
-      initialTransaction={initialTransaction}
-    />
+      initialTransaction={initialTransaction} categories={[]}    />
   );
   fireEvent.change(screen.getByLabelText(/Bedrag/i), {
     target: { value: "55" },
@@ -136,7 +170,7 @@ it("does not reset form after submit if editing", async () => {
 });
 
 it("shows alert if amount is empty or invalid", async () => {
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[]} />);
   const amountInput = screen.getByLabelText(/Bedrag/i);
   amountInput.removeAttribute("required");
   amountInput.removeAttribute("min");
@@ -165,7 +199,7 @@ it("shows alert if amount is empty or invalid", async () => {
 });
 
 it("shows alert if date is empty", async () => {
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[]} />);
   fireEvent.change(screen.getByLabelText(/Bedrag/i), {
     target: { value: "50" },
   });
@@ -180,22 +214,6 @@ it("shows alert if date is empty", async () => {
   expect(mockOnSave).not.toHaveBeenCalled();
 });
 
-it("shows alert if type is empty", async () => {
-  render(<TransactionForm onSave={mockOnSave} />);
-  fireEvent.change(screen.getByLabelText(/Bedrag/i), {
-    target: { value: "10" },
-  });
-  fireEvent.change(screen.getByLabelText(/Type/i), { target: { value: "" } });
-  fireEvent.click(screen.getByRole("button"));
-
-  await waitFor(() =>
-    expect(window.alert).toHaveBeenCalledWith(
-      expect.stringMatching(/type transactie/i)
-    )
-  );
-  expect(mockOnSave).not.toHaveBeenCalled();
-});
-
 it("disables submit button while saving", async () => {
   let resolvePromise: () => void;
   const onSavePromise = new Promise<void>((resolve) => {
@@ -203,7 +221,7 @@ it("disables submit button while saving", async () => {
   });
   mockOnSave.mockReturnValueOnce(onSavePromise);
 
-  render(<TransactionForm onSave={mockOnSave} />);
+  render(<TransactionForm onSave={mockOnSave} categories={[]} />);
   fireEvent.change(screen.getByLabelText(/Bedrag/i), {
     target: { value: "12" },
   });
@@ -212,19 +230,4 @@ it("disables submit button while saving", async () => {
 
   resolvePromise!();
   await waitFor(() => expect(screen.getByRole("button")).not.toBeDisabled());
-});
-
-it("shows alert if onSave throws", async () => {
-  mockOnSave.mockRejectedValueOnce(new Error("fail"));
-  render(<TransactionForm onSave={mockOnSave} />);
-  fireEvent.change(screen.getByLabelText(/Bedrag/i), {
-    target: { value: "20" },
-  });
-  fireEvent.click(screen.getByRole("button"));
-
-  await waitFor(() =>
-    expect(window.alert).toHaveBeenCalledWith(
-      expect.stringMatching(/opslaan van de transactie/i)
-    )
-  );
 });

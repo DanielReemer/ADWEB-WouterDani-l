@@ -7,11 +7,5 @@ export default interface Transaction {
   type: "income" | "expense";
   date: Timestamp;
   archiedAt?: Timestamp;
-}
-
-export interface TransactionFormData {
-  description: string;
-  amount: number;
-  type: "income" | "expense";
-  date: Timestamp;
+  categoryId: string | null;
 }

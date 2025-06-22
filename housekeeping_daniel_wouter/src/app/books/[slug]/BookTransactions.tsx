@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MonthSelector from "@/app/books/[slug]/MonthSelector";
 import Statistics from "@/app/books/[slug]/Statistics";
 import TransactionList from "@/app/books/[slug]/TransactionList";
 import SkeletonTransactionList from "@/app/ui/SkeletonTransactionList";
 import TransactionForm from "@/app/books/[slug]/TransactionForm";
-import { filterTransactionsByMonth } from "@/lib/filterTransactions";
-import Transaction from "@/lib/Transaction";
+import { filterTransactionsByMonth } from "@/lib/utils/filterTransactions";
+import Transaction from "@/lib/collections/Transaction";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
+import { Category } from "@/lib/collections/Category";
+import { getCategories } from "@/services/category.service";
+import { useParams } from "next/navigation";
 
 type BookTransactionsProps = {
   transactions: Transaction[];
@@ -28,6 +31,15 @@ export default function BookTransactions({
     year: new Date().getFullYear(),
   });
   const [showForm, setShowForm] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  const { slug } = useParams<{ slug: string }>();
+
+  useEffect(() => {
+    if (slug) {
+      getCategories(slug, setCategories);
+    }
+  }, [slug]);
 
   const filtered = filterTransactionsByMonth(
     transactions,
@@ -61,14 +73,16 @@ export default function BookTransactions({
           >
             {showForm ? "Annuleer" : "Nieuwe transactie"}
           </button>
-          {showForm && <TransactionForm onSave={handleSave} />}
+          {showForm && (
+            <TransactionForm onSave={handleSave} categories={categories} />
+          )}
           <MonthSelector
             selectedMonth={selectedDate.month}
             selectedYear={selectedDate.year}
             onChange={setSelectedDate}
           />
           <Statistics income={income} expense={expense} />
-          <TransactionList transactions={filtered} />
+          <TransactionList transactions={filtered} categories={categories} />
         </>
       )}
     </div>
