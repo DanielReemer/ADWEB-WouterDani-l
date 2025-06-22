@@ -14,7 +14,6 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Transaction, { TransactionFormData } from "@/lib/Transaction";
-import { arch } from "os";
 
 export function listenToTransactions(
   transactionIds: string[],

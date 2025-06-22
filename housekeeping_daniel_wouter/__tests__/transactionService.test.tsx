@@ -21,7 +21,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { TransactionFormData } from "@/lib/Transaction";
+import Transaction, { TransactionFormData } from "@/lib/Transaction";
 
 jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),
@@ -168,7 +168,7 @@ describe("TransactionService", () => {
         type: "income",
         date: Timestamp.fromDate(new Date()),
         categoryId: null,
-      };
+      } as Transaction;
       const newCategoryId = "newCategoryId";
 
       await updateTransactionCategory(mockTransaction, newCategoryId);

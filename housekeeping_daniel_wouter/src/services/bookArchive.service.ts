@@ -1,16 +1,10 @@
 import {
   doc,
-  writeBatch,
   getDoc,
-  collection,
-  getDocs,
-  query,
-  where,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Transaction from "@/lib/Transaction";
 
 export async function archiveBook(bookId: string): Promise<void> {
   try {

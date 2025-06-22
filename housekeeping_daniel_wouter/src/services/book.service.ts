@@ -5,7 +5,6 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  setDoc,
   getDoc,
   query,
   where,
@@ -16,7 +15,6 @@ import { db } from "@/lib/firebase";
 import { Book } from "@/lib/collections/Book";
 import { Unsubscribe } from "firebase/auth";
 import { BookFormData } from "@/app/books/BookForm";
-import { a } from "motion/react-client";
 
 export function listenToBook(
   bookId: string,

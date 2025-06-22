@@ -9,7 +9,7 @@ import {
 
 export function listenToShareInvitations(
   email: string,
-  listener: (invitations: any[]) => void
+  listener: (invitations: unknown[]) => void
 ): Unsubscribe {
   return onSnapshot(
     query(
@@ -18,7 +18,7 @@ export function listenToShareInvitations(
       where("status", "==", "pending")
     ),
     (snapshot) => {
-      const invitations: any[] = [];
+      const invitations: unknown[] = [];
       snapshot.forEach((docSnap) => {
         invitations.push({ id: docSnap.id, ...docSnap.data() });
       });

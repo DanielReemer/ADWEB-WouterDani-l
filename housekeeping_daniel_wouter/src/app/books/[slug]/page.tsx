@@ -22,7 +22,7 @@ import { calculateBalance } from "@/lib/utils/calculateBalance";
 export default function BookPage() {
   const { loading, data: book, setLoaded, reset } = useLoading<Book>();
   const { slug } = useParams<{ slug: string }>();
-  const user = useRequireUser();
+  useRequireUser();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
@@ -45,12 +45,11 @@ export default function BookPage() {
       setTransactionsLoading(false);
     });
     return () => unsubscribe();
-  }, [book?.transactionIds]);
+  }, [book?.transactionIds, book]);
 
   const handleSaveTransaction = async (
     transaction: TransactionFormData
   ) => {
-    const userId = user.uid;
     const bookId = slug;
 
     return addTransaction(bookId, transaction);

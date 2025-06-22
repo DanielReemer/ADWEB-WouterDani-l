@@ -4,8 +4,14 @@ import { acceptBookShare } from "@/services/book.service";
 import { respondToShareInvitation } from "@/services/bookShare.service";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
+type Invitation = {
+  id: string;
+  bookId: string;
+  bookName: string;
+  ownerId: string;
+  };
 type Props = {
-  invitations: any[];
+  invitations: Invitation[];
 };
 
 export default function MessageCenterInvitationList({ invitations }: Props) {
@@ -14,7 +20,7 @@ export default function MessageCenterInvitationList({ invitations }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const handleRespond = async (
-    invitation: any,
+    invitation: Invitation,
     status: "accepted" | "declined"
   ) => {
     setLoadingId(invitation.id);
@@ -22,14 +28,9 @@ export default function MessageCenterInvitationList({ invitations }: Props) {
     try {
       await respondToShareInvitation(invitation.id, status, user.uid);
       if (status === "accepted") {
-        await acceptBookShare(
-          invitation.id,
-          user.uid,
-          invitation.bookId,
-          invitation.ownerId
-        );
+        await acceptBookShare(invitation.id, user.uid, invitation.bookId);
       }
-    } catch (e: any) {
+    } catch (e) {
       setError(e.message || "Onbekende fout");
     } finally {
       setLoadingId(null);

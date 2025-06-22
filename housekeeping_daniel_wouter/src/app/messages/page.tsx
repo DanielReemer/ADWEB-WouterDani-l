@@ -6,7 +6,7 @@ import MessageCenterInvitationList from "@/app/messages/MessageInvitationList";
 
 export default function MessageCenterPage() {
   const user = useRequireUser();
-  const [invitations, setInvitations] = useState<any[]>([]);
+  const [invitations, setInvitations] = useState<unkown[]>([]);
 
   useEffect(() => {
     if (!user.email) return;

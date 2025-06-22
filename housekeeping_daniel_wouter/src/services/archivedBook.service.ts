@@ -1,12 +1,8 @@
 import {
-  doc,
   onSnapshot,
   collection,
-  addDoc,
-  deleteDoc,
   query,
   and,
-  or,
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";

@@ -1,13 +1,12 @@
 "use client";
 import BookList from "./BookList";
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { listenToBooks } from "@/services/book.service";
 import { inviteToShareBook } from "@/services/bookShare.service";
 import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 import {
-  listenToTransaction,
   listenToTransactions,
 } from "@/services/transaction.service";
 import Transaction from "@/lib/Transaction";
@@ -74,8 +73,10 @@ export default function BookPage() {
       await inviteToShareBook(user.uid, shareBook!.id, shareBook!.name, emails);
       setShareSuccess("Uitnodiging verstuurd!");
       setTimeout(closeShareModal, 1200);
-    } catch (e: any) {
-      setShareError(e.message || "Onbekende fout bij uitnodigen.");
+    } catch (e) {
+      setShareError(
+        e instanceof Error ? e.message : "Onbekende fout bij uitnodigen."
+      );
     } finally {
       setShareLoading(false);
     }
