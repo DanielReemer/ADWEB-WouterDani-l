@@ -1,0 +1,11 @@
+import { DocumentData } from "firebase/firestore";
+
+export interface Book extends DocumentData {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+export interface ArchivedBook extends Book {
+    archivedAt: Date;
+}
