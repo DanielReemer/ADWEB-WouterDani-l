@@ -3,104 +3,196 @@ import BookList from "./BookList";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listenToBooks } from "@/services/book.service";
+import { inviteToShareBook } from "@/services/bookShare.service";
 import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
-import { listenToTransactions } from "@/services/transaction.service";
-import Transaction from "@/lib/collections/Transaction";
+import {
+  listenToTransactions,
+} from "@/services/transaction.service";
+import Transaction from "@/lib/Transaction";
 import { calculateBalance } from "@/lib/utils/calculateBalance";
+import ShareBookModal from "@/app/books/ShareBookModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function BookPage() {
   const user = useRequireUser();
   const [books, setBooks] = useState<Book[]>([]);
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [transactionsPerBook, setTransactionsPerBook] = useState<
+  const [transactions, setTransactions] = useState<
     Record<string, Transaction[]>
   >({});
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareBook, setShareBook] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [shareSuccess, setShareSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = listenToBooks(user.uid, setBooks);
-    return unsubscribe;
+    const unsub = listenToBooks(user.uid, (books: Book[] | undefined) => {
+      setBooks(books || []);
+    });
+    return () => unsub();
   }, [user.uid]);
 
   useEffect(() => {
-    const unsubscribes = books.map((book: Book) =>
-      listenToTransactions(user.uid, book.id, (transactions) =>
-        setAllTransactions((prev) => [
-          ...prev.filter((t) => t.bookId !== book.id),
-          ...transactions,
-        ])
-      )
-    );
-    return () => unsubscribes.forEach((unsub) => unsub && unsub());
-  }, [user.uid, books]);
+    const unsubscribes = books
+      .filter((book) => book.transactionIds)
+      .map((book) =>
+        listenToTransactions(
+          book.transactionIds || [],
+          (transactions: Transaction[]) => {
+            setTransactions((prev) => ({ ...prev, [book.id]: transactions }));
+          }
+        )
+      );
 
-  useEffect(() => {
-    const transactionsMap: Record<string, Transaction[]> = {};
-    allTransactions.forEach((transaction) => {
-      if (!transactionsMap[transaction.bookId])
-        transactionsMap[transaction.bookId] = [];
-      transactionsMap[transaction.bookId].push(transaction);
-    });
-    setTransactionsPerBook(transactionsMap);
-  }, [allTransactions]);
+    return () => unsubscribes.forEach((unsub) => unsub && unsub());
+  }, [books]);
+
+  const openShareModal = (id: string, name: string) => {
+    setShareBook({ id, name });
+    setShareError(null);
+    setShareSuccess(null);
+    setShareModalOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setShareBook(null);
+    setShareError(null);
+    setShareSuccess(null);
+    setShareModalOpen(false);
+  };
+
+  const handleShareSubmit = async (emails: string[]) => {
+    setShareLoading(true);
+    setShareError(null);
+    setShareSuccess(null);
+    try {
+      await inviteToShareBook(user.uid, shareBook!.id, shareBook!.name, emails);
+      setShareSuccess("Uitnodiging verstuurd!");
+      setTimeout(closeShareModal, 1200);
+    } catch (e) {
+      setShareError(
+        e instanceof Error ? e.message : "Onbekende fout bij uitnodigen."
+      );
+    } finally {
+      setShareLoading(false);
+    }
+  };
 
   return (
-    <section className="w-full h-full max-w-3xl flex flex-col justify-center items-center gap-4 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-      <div className="flex items-center w-full">
-        <h2 className="text-3xl font-bold text-blue-600 flex-1 text-center">
+    <section className="w-full h-full max-w-3xl flex flex-col items-center gap-6 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+      <header className="w-full flex flex-col items-center gap-1">
+        <h2 className="text-3xl font-bold text-blue-600 text-center">
           Huishoudboekjes
         </h2>
-      </div>
-      <p className="text-gray-500 mb-4 text-center">
-        Hier vind je een overzicht van al jouw boeken. Klik op een boek om de
-        details te bekijken of om het te bewerken.
-      </p>
-      <div className="flex gap-4 w-full max-w-fit">
+        <p className="text-gray-500 text-center">
+          Overzicht van jouw boeken en gedeelde boeken. Klik op een boek voor
+          details of bewerking.
+        </p>
+      </header>
+      <div className="flex gap-4 w-full justify-center">
         <Link
           href="/books/create"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
-          Nieuw boek toevoegen +
+          Nieuw boek +
         </Link>
         <Link
           href="/books/archive"
-          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
         >
-          Archief bekijken
+          Archief
         </Link>
       </div>
       <BookList books={books} title="Actieve boeken">
         {(book: Book) => {
-          const transactions = transactionsPerBook[book.id] || [];
-          const balance = calculateBalance(transactions);
+          const balance = calculateBalance(transactions[book.id] ?? []);
           return (
-            <Link
-              key={book.id}
-              href={`/books/${book.id}`}
-              className="flex flex-col sm:flex-row items-center justify-between gap-6 p-4 rounded-lg shadow-2xl bg-gradient-to-r from-sky-400 to-blue-50 hover:from-sky-500 hover:to-blue-600 transition"
-            >
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{book.name}</h3>
-              </div>
-              <div className="flex-none text-right">
-                <strong>
+            <div className="w-full flex items-center gap-2" key={book.id}>
+              <Link
+                href={`/books/${book.id}`}
+                className="flex flex-1 flex-col sm:flex-row items-center justify-between gap-6 p-4 rounded-lg shadow bg-gradient-to-r from-sky-400 to-blue-50 hover:from-sky-500 hover:to-blue-600"
+                tabIndex={0}
+                aria-label={`Ga naar boek ${book.name}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold truncate">
+                    {book.name}
+                    {book.sharedWith?.includes(user.uid) && (
+                      <span className="ml-2 px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded">
+                        Gedeeld
+                      </span>
+                    )}
+                  </h3>
+                  {book.ownerId !== user.uid && (
+                    <div className="text-xs text-gray-500 truncate">
+                      Eigenaar:{" "}
+                      <span className="font-mono">{book.ownerId}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-none text-right">
                   <span className="text-sm mr-1">Balans:</span>
-                </strong>
-                <span
-                  className={`text-xl font-bold ${
-                    balance < 0 ? "text-red-600" : "text-green-600"
-                  }`}
+                  <span
+                    className={`text-xl font-bold ${
+                      balance < 0 ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    €{" "}
+                    {balance.toLocaleString("nl-NL", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              </Link>
+              {book.ownerId == user.uid && (
+                <button
+                  type="button"
+                  className="group px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition flex items-center"
+                  onClick={() => openShareModal(book.id, book.name)}
+                  aria-label={`Deel boek ${book.name}`}
                 >
-                  €{" "}
-                  {balance.toLocaleString("nl-NL", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-            </Link>
+                  Delen
+                </button>
+              )}
+            </div>
           );
         }}
       </BookList>
+      <AnimatePresence>
+        {shareModalOpen && (
+          <motion.div
+            key="share-modal"
+            initial={{ opacity: 0, y: 32, scale: 0.97 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              transition: { duration: 0.32, ease: [0.36, 0.66, 0.04, 1] },
+            }}
+            exit={{
+              opacity: 0,
+              y: 32,
+              scale: 0.97,
+              transition: { duration: 0.2, ease: [0.36, 0.66, 0.04, 1] },
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          >
+            <ShareBookModal
+              open
+              onClose={closeShareModal}
+              onSubmit={handleShareSubmit}
+              loading={shareLoading}
+              error={shareError}
+              success={shareSuccess}
+              bookName={shareBook?.name}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

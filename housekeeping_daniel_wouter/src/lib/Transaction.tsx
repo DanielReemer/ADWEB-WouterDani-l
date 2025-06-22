@@ -9,3 +9,11 @@ export default interface Transaction {
   archiedAt?: Timestamp;
   categoryId: string | null;
 }
+
+export interface TransactionFormData {
+  description: string;
+  amount: number;
+  type: "income" | "expense";
+  date: Timestamp;
+  categoryId: string | null;
+}

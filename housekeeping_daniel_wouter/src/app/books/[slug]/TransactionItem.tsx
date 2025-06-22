@@ -31,17 +31,20 @@ export default function TransactionItem({
     const confirmed = confirm("Weet je zeker dat je deze transactie wilt verwijderen?");
     if (!confirmed) return;
 
-    try {
-      await deleteTransaction(transaction.userId, transaction.bookId, transaction.id);
-    } catch (err) {
+    deleteTransaction(
+      transaction.id
+    ).catch((err) => {
       console.error("Fout bij verwijderen:", err);
       alert("Verwijderen mislukt.");
-    }
+    });
   };
 
   const handleUpdate = async (updated: TransactionFormData) => {
     try {
-      await updateTransaction(transaction.userId, transaction.bookId, transaction.id, updated);
+      await updateTransaction(
+        transaction.id,
+        updated
+      );
       setIsEditing(false);
     } catch (err) {
       console.error("Fout bij updaten:", err);

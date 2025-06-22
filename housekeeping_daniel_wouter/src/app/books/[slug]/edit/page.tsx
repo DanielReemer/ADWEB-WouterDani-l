@@ -21,7 +21,7 @@ export default function EditBookPage() {
 
   useEffect(() => {
     if (!slug) return;
-    const unsubscribe = listenToBook(user.uid, slug, (book) => {
+    const unsubscribe = listenToBook(slug, (book) => {
       if (!book) {
         setGlobalError("Boek niet gevonden.");
       } else {
@@ -29,20 +29,22 @@ export default function EditBookPage() {
       }
     });
     return () => unsubscribe();
-  }, [slug, user.uid]);
+  }, [slug]);
 
   const handleUpdate = async (data: BookFormData) => {
-    if (!book) return;
+    if (!book || book.ownerId !== user.uid) {
+      setGlobalError("Je hebt geen rechten om dit boek te bewerken.");
+      return;
+    }
     setLoading(true);
 
     try {
-      await updateBook(user.uid, book.id, {
+      await updateBook(book.id, {
         name: data.name,
         description: data.description,
       });
       router.push(`/books/${book.id}`);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setGlobalError("Kon het boek niet updaten.");
     } finally {
       setLoading(false);
@@ -50,14 +52,14 @@ export default function EditBookPage() {
   };
 
   const handleArchive = async () => {
-    if (!book) return;
+    if (!book || book.ownerId !== user.uid) return;
     setArchiving(true);
     setGlobalError(undefined);
+
     try {
-      await archiveBook(user.uid, book.id);
+      await archiveBook(book.id);
       router.push("/books");
-    } catch (err) {
-      console.error(err);
+    } catch {
       setGlobalError("Kon het boek niet archiveren.");
     } finally {
       setArchiving(false);
@@ -79,7 +81,7 @@ export default function EditBookPage() {
   };
 
   return (
-    <section className="flex w-full bg-blue-300 rounded rounded-3xl shadow-2xl max-w-2xl flex-col items-center p-6 space-y-6">
+    <section className="flex w-full bg-blue-300 rounded-3xl shadow-2xl max-w-2xl flex-col items-center p-6 space-y-6">
       <BookForm
         initialData={initialForm}
         onSubmit={handleUpdate}
@@ -88,17 +90,18 @@ export default function EditBookPage() {
         loading={loading}
         globalError={globalError}
       />
-
-      <div className="flex justify-center bg-white rounded rounded-3xl shadow-2xl max-w-xl p-5 w-full mt-4">
-        <button
-          type="button"
-          onClick={handleArchive}
-          disabled={archiving || loading}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 hover:cursor-pointer disabled:opacity-50"
-        >
-          {archiving ? "Archiveren..." : "Archiveren"}
-        </button>
-      </div>
+      {book.ownerId === user.uid && (
+        <div className="flex justify-center bg-white rounded-3xl shadow-2xl max-w-xl p-5 w-full mt-4">
+          <button
+            type="button"
+            onClick={handleArchive}
+            disabled={archiving || loading}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+          >
+            {archiving ? "Archiveren..." : "Archiveren"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
