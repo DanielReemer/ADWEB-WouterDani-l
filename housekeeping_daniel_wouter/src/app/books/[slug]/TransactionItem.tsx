@@ -25,8 +25,6 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
     if (!confirmed) return;
 
     deleteTransaction(
-      transaction.userId,
-      transaction.bookId,
       transaction.id
     ).catch((err) => {
       console.error("Fout bij verwijderen:", err);
@@ -37,8 +35,6 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
   const handleUpdate = async (updated: TransactionFormData) => {
     try {
       await updateTransaction(
-        transaction.userId,
-        transaction.bookId,
         transaction.id,
         updated
       );

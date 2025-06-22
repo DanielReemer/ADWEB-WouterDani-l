@@ -75,7 +75,8 @@ export default function TransactionForm({
 
     onSave(transaction)
       .then(() => !initialTransaction && resetForm())
-      .catch(() => {
+      .catch((error) => {
+        console.error(error.message);
         alert("Er is iets misgegaan bij het opslaan van de transactie.");
       })
       .finally(() => setSaving(false));

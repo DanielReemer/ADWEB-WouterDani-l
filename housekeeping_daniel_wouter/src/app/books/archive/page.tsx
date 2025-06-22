@@ -1,19 +1,24 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import BookList from "@/app/books/BookList";
 import Link from "next/link";
 import { listenToArchivedBooks } from "@/services/archivedBook.service";
 import { restoreBook } from "@/services/bookArchive.service";
-import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
+import { Book } from "@/lib/collections/Book";
 
 export default function ArchivedBooksPage() {
   const user = useRequireUser();
   const [books, setBooks] = useState<Book[]>([]);
+
   useEffect(() => {
-    const unsubscribe = listenToArchivedBooks(user.uid, setBooks);
-    return unsubscribe;
+    const unsubscribe = listenToArchivedBooks(user.uid, (books) =>
+      setBooks(books || [])
+    );
+    return () => unsubscribe();
   }, [user.uid]);
+
   async function handleRestore(book: Book) {
     try {
       await restoreBook(user.uid, book.id);
@@ -21,6 +26,7 @@ export default function ArchivedBooksPage() {
       console.error(error);
     }
   }
+
   return (
     <section className="w-full h-full max-w-3xl flex flex-col justify-center items-center gap-6 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
       <div className="flex items-center w-full">

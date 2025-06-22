@@ -2,22 +2,22 @@
 import BookList from "./BookList";
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
-import { listenToBooks, listenToSharedBooks } from "@/services/book.service";
+import { listenToBooks } from "@/services/book.service";
 import { inviteToShareBook } from "@/services/bookShare.service";
 import { Book } from "@/lib/collections/Book";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
-import { listenToTransactions } from "@/services/transaction.service";
+import {
+  listenToTransaction,
+  listenToTransactions,
+} from "@/services/transaction.service";
 import Transaction from "@/lib/Transaction";
 import { calculateBalance } from "@/lib/utils/calculateBalance";
 import ShareBookModal from "@/app/books/ShareBookModal";
 import { motion, AnimatePresence } from "framer-motion";
 
-type SharedBook = Book & { ownerId: string };
-
 export default function BookPage() {
   const user = useRequireUser();
   const [books, setBooks] = useState<Book[]>([]);
-  const [sharedBooks, setSharedBooks] = useState<SharedBook[]>([]);
   const [transactions, setTransactions] = useState<
     Record<string, Transaction[]>
   >({});
@@ -31,23 +31,26 @@ export default function BookPage() {
   const [shareSuccess, setShareSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubBooks = listenToBooks(user.uid, setBooks);
-    const unsubShared = listenToSharedBooks(user.uid, setSharedBooks);
-    return () => {
-      unsubBooks();
-      unsubShared();
-    };
+    const unsub = listenToBooks(user.uid, (books: Book[] | undefined) => {
+      setBooks(books || []);
+    });
+    return () => unsub();
   }, [user.uid]);
 
   useEffect(() => {
-    const allBooks = [...books, ...sharedBooks];
-    const unsubscribes = allBooks.map((book) =>
-      listenToTransactions(user.uid, book.id, (txs) =>
-        setTransactions((prev) => ({ ...prev, [book.id]: txs }))
-      )
-    );
+    const unsubscribes = books
+      .filter((book) => book.transactionIds)
+      .map((book) =>
+        listenToTransactions(
+          book.transactionIds || [],
+          (transactions: Transaction[]) => {
+            setTransactions((prev) => ({ ...prev, [book.id]: transactions }));
+          }
+        )
+      );
+
     return () => unsubscribes.forEach((unsub) => unsub && unsub());
-  }, [user.uid, books, sharedBooks]);
+  }, [books]);
 
   const openShareModal = (id: string, name: string) => {
     setShareBook({ id, name });
@@ -78,14 +81,6 @@ export default function BookPage() {
     }
   };
 
-  const allBooks = useMemo(
-    () => [
-      ...books.map((b) => ({ ...b, shared: false, ownerId: user.uid })),
-      ...sharedBooks.map((b) => ({ ...b, shared: true })),
-    ],
-    [books, sharedBooks, user.uid]
-  );
-
   return (
     <section className="w-full h-full max-w-3xl flex flex-col items-center gap-6 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
       <header className="w-full flex flex-col items-center gap-1">
@@ -111,8 +106,8 @@ export default function BookPage() {
           Archief
         </Link>
       </div>
-      <BookList books={allBooks} title="Actieve boeken">
-        {(book: Book & { shared?: boolean; ownerId?: string }) => {
+      <BookList books={books} title="Actieve boeken">
+        {(book: Book) => {
           const balance = calculateBalance(transactions[book.id] ?? []);
           return (
             <div className="w-full flex items-center gap-2" key={book.id}>
@@ -125,13 +120,13 @@ export default function BookPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold truncate">
                     {book.name}
-                    {book.shared && (
+                    {book.sharedWith?.includes(user.uid) && (
                       <span className="ml-2 px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded">
                         Gedeeld
                       </span>
                     )}
                   </h3>
-                  {book.shared && book.ownerId !== user.uid && (
+                  {book.ownerId !== user.uid && (
                     <div className="text-xs text-gray-500 truncate">
                       Eigenaar:{" "}
                       <span className="font-mono">{book.ownerId}</span>
@@ -152,7 +147,7 @@ export default function BookPage() {
                   </span>
                 </div>
               </Link>
-              {!book.shared && (
+              {book.ownerId == user.uid && (
                 <button
                   type="button"
                   className="group px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition flex items-center"

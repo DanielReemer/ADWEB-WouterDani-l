@@ -1,53 +1,83 @@
-import { doc, writeBatch, getDoc } from "firebase/firestore";
+import {
+  doc,
+  writeBatch,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Transaction from "@/lib/Transaction";
 
-/**
- * Archive a book by moving it to the archivedBooks collection.
- * @param userId The user's ID
- * @param id The book's ID
- * @throws If the book does not exist
- */
-export async function archiveBook(userId: string, id: string): Promise<void> {
-  const bookRef = doc(db, "users", userId, "books", id);
-  const archivedRef = doc(db, "users", userId, "archivedBooks", id);
+export async function archiveBook(bookId: string): Promise<void> {
+  try {
+    const bookRef = doc(db, "books", bookId);
+    const bookSnapshot = await getDoc(bookRef);
 
-  const bookSnap = await getDoc(bookRef);
-  if (!bookSnap.exists()) {
-    throw new Error("Book niet gevonden");
+    if (!bookSnapshot.exists()) {
+      throw new Error(`Book with ID ${bookId} does not exist.`);
+    }
+
+    const bookData = bookSnapshot.data();
+    await updateDoc(bookRef, {
+      archivedAt: serverTimestamp(),
+    });
+
+    const transactionPromises = bookData.transactionIds.map(
+      async (transactionId: string) => {
+        const transactionRef = doc(db, "transactions", transactionId);
+        const transactionSnapshot = await getDoc(transactionRef);
+
+        if (!transactionSnapshot.exists()) {
+          throw new Error(
+            `Transaction with ID ${transactionId} does not exist.`
+          );
+        }
+
+        return updateDoc(transactionRef, {
+          archivedAt: serverTimestamp(),
+        });
+      }
+    );
+
+    await Promise.all(transactionPromises);
+  } catch (error) {
+    console.error("Failed to archive book and its transactions:", error);
+    throw error;
   }
-
-  const bookData = bookSnap.data();
-
-  const batch = writeBatch(db);
-  batch.set(archivedRef, {
-    ...bookData,
-    archivedAt: new Date(),
-  });
-  batch.delete(bookRef);
-
-  await batch.commit();
 }
 
-/**
- * Restore an archived book by moving it back to the books collection.
- * @param userId The user's ID
- * @param id The archived book's ID
- * @throws If the archived book does not exist
- */
-export async function restoreBook(userId: string, id: string): Promise<void> {
-  const archivedRef = doc(db, "users", userId, "archivedBooks", id);
-  const bookRef = doc(db, "users", userId, "books", id);
+export async function restoreBook(
+  userId: string,
+  bookId: string
+): Promise<void> {
+  const bookRef = doc(db, "books", bookId);
+  const bookSnapshot = await getDoc(bookRef);
 
-  const archivedSnap = await getDoc(archivedRef);
-  if (!archivedSnap.exists()) {
-    throw new Error("Gearchiveerd boek niet gevonden");
+  if (!bookSnapshot.exists()) {
+    throw new Error(`Book with ID ${bookId} does not exist.`);
   }
 
-  const archivedData = archivedSnap.data();
+  const bookData = bookSnapshot.data();
+  if (bookData.ownerId !== userId) {
+    throw new Error("You are not authorized to restore this book.");
+  }
 
-  const batch = writeBatch(db);
-  batch.set(bookRef, archivedData);
-  batch.delete(archivedRef);
+  await updateDoc(bookRef, {
+    archivedAt: null,
+  });
 
-  await batch.commit();
+  const transactionPromises = bookData.transactionIds.map(
+    (transactionId: string) => {
+      const transactionRef = doc(db, "transactions", transactionId);
+      return updateDoc(transactionRef, {
+        archivedAt: null,
+      });
+    }
+  );
+
+  await Promise.all(transactionPromises);
 }

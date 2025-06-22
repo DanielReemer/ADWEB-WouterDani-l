@@ -44,6 +44,12 @@ export default function Navbar() {
           >
             Boeken
           </Link>
+          <Link
+          href="/messages"
+          className="text-gray-700 hover:text-blue-600 transition"
+          >
+            Berichten
+          </Link>
           {!loading &&
             (user ? (
               <>

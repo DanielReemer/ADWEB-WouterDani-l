@@ -30,31 +30,21 @@ export default function BookPage() {
 
   useEffect(() => {
     reset();
-    const unsubscribeBook = listenToBook(
-      user.uid,
-      slug,
-      (book: Book | undefined) => {
-        setLoaded(book);
-      }
-    );
-    return () => {
-      unsubscribeBook();
-    };
-  }, [user.uid, slug, setLoaded, reset]);
-
+    const unsubscribeBook = listenToBook(slug, setLoaded);
+    return () => unsubscribeBook();
+  }, [slug, reset, setLoaded]);
+  
   useEffect(() => {
+    console.log("Book loaded:", book);
+    if (!book?.transactionIds) return;
     setTransactionsLoading(true);
-    const unsubscribe = listenToTransactions(
-      user.uid,
-      slug,
-      (transactions: Transaction[]) => {
-        setTransactions(transactions);
-        setBalance(calculateBalance(transactions));
-        setTransactionsLoading(false);
-      }
-    );
+    const unsubscribe = listenToTransactions(book.transactionIds, (transactions) => {
+      setTransactions(transactions);
+      setBalance(calculateBalance(transactions));
+      setTransactionsLoading(false);
+    });
     return () => unsubscribe();
-  }, [user.uid, slug]);
+  }, [book?.transactionIds]);
 
   const handleSaveTransaction = async (
     transaction: TransactionFormData
@@ -62,7 +52,7 @@ export default function BookPage() {
     const userId = user.uid;
     const bookId = slug;
 
-    return addTransaction(userId, bookId, transaction);
+    return addTransaction(bookId, transaction);
   };
 
   if (loading) {
