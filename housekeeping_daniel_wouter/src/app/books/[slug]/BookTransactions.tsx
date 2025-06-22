@@ -6,7 +6,7 @@ import Statistics from "@/app/books/[slug]/Statistics";
 import TransactionList from "@/app/books/[slug]/TransactionList";
 import SkeletonTransactionList from "@/app/ui/SkeletonTransactionList";
 import TransactionForm from "@/app/books/[slug]/TransactionForm";
-import { filterTransactionsByCategory, filterTransactionsByMonth } from "@/lib/utils/filterTransactions";
+import { filterTransactionsByMonth } from "@/lib/utils/filterTransactions";
 import Transaction from "@/lib/collections/Transaction";
 import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 import { Category } from "@/lib/collections/Category";
@@ -41,12 +41,11 @@ export default function BookTransactions({
     }
   }, [slug]);
 
-  let filtered = filterTransactionsByMonth(
+  const filtered = filterTransactionsByMonth(
     transactions,
     selectedDate.month,
     selectedDate.year
   );
-
 
   const income = filtered
     .filter((t) => t.type === "income")
