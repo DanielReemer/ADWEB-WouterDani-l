@@ -12,7 +12,6 @@ import { TransactionFormData } from "@/app/books/[slug]/TransactionForm";
 import { Category } from "@/lib/collections/Category";
 import { getCategories } from "@/services/category.service";
 import { useParams } from "next/navigation";
-import CategoryFilter from "./CategoryFilter";
 
 type BookTransactionsProps = {
   transactions: Transaction[];
@@ -85,11 +84,6 @@ export default function BookTransactions({
             selectedMonth={selectedDate.month}
             selectedYear={selectedDate.year}
             onChange={setSelectedDate}
-          />
-          <CategoryFilter
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onChange={setSelectedCategory}
           />
           <Statistics income={income} expense={expense} />
           <TransactionList transactions={filtered} categories={categories} />
