@@ -44,6 +44,7 @@ export function listenToTransactions(
         amount: data.amount || 0,
         type: data.type || "",
         date: data.date,
+        categoryId: data.categoryId || null,
       } as Transaction;
     });
     listener(transactions);
@@ -66,7 +67,8 @@ export function listenToTransaction(
             amount: data.amount || 0,
             type: data.type || "",
             date: data.date,
-          }
+            categoryId: data.categoryId || null,
+          } as Transaction
         : null
     );
   });
@@ -83,6 +85,7 @@ export async function addTransaction(
     type: transactionFormData.type,
     date: transactionFormData.date,
     archivedAt: null,
+    categoryId: transactionFormData.categoryId || null,
   });
 
   const bookRef = doc(db, "books", bookId);
@@ -105,6 +108,20 @@ export async function updateTransaction(
     amount: transactionFormData.amount,
     type: transactionFormData.type,
     date: transactionFormData.date,
+    categoryId: transactionFormData.categoryId || null,
+  });
+}
+
+export async function updateTransactionCategory(
+  transaction: Transaction,
+  newCategoryId: string
+): Promise<void> {
+  await updateTransaction(transaction.id, {
+    description: transaction.description,
+    amount: transaction.amount,
+    type: transaction.type,
+    date: transaction.date,
+    categoryId: newCategoryId,
   });
 }
 
