@@ -31,7 +31,11 @@ export default function MessageCenterInvitationList({ invitations }: Props) {
         await acceptBookShare(invitation.id, user.uid, invitation.bookId);
       }
     } catch (e) {
-      setError(e.message || "Onbekende fout");
+      if (e && typeof e === "object" && "message" in e) {
+        setError((e as { message: string }).message || "Onbekende fout");
+      } else {
+        setError("Onbekende fout");
+      }
     } finally {
       setLoadingId(null);
     }
