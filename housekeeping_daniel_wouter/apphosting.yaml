@@ -15,19 +15,19 @@ env:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    secret: AIzaSyCCquWWyGhxwE9PT_7mgjEsVcW1vNiYJ0g
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
 
-  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    secret: huishoudboekje-c0702.firebaseapp.com
+  # - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+  #   secret: huishoudboekje-c0702.firebaseapp.com
   
-  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    secret: huishoudboekje-c0702
+  # - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  #   secret: huishoudboekje-c0702
 
-  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    secret: huishoudboekje-c0702.firebasestorage.app
+  # - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+  #   secret: huishoudboekje-c0702.firebasestorage.app
   
-  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    secret: 645748182840
+  # - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  #   secret: 645748182840
 
-  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    secret: 1:645748182840:web:8e42e3ff3a39a17fe63bcd
+  # - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+  #   secret: 1:645748182840:web:8e42e3ff3a39a17fe63bcd
