@@ -30,7 +30,6 @@ export default function BookTransactions({
     month: new Date().getMonth(),
     year: new Date().getFullYear(),
   });
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -56,8 +55,6 @@ export default function BookTransactions({
   const expense = filtered
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
-
-  filtered = filterTransactionsByCategory(filtered, selectedCategory);
 
   const handleSave = async (transaction: TransactionFormData) => {
     await onSave(transaction);
