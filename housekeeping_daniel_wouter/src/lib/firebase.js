@@ -7,13 +7,14 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: "AIzaSyCCquWWyGhxwE9PT_7mgjEsVcW1vNiYJ0g",
+    authDomain: "huishoudboekje-c0702.firebaseapp.com",
+    projectId: "huishoudboekje-c0702",
+    storageBucket: "huishoudboekje-c0702.firebasestorage.app",
+    messagingSenderId: "645748182840",
+    appId: "1:645748182840:web:8e42e3ff3a39a17fe63bcd",
 };
+
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
