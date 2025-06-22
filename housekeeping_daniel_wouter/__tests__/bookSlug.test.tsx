@@ -1,260 +1,150 @@
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-  fireEvent,
-} from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import BookPage from "@/app/books/[slug]/page";
-import { useLoading as mockUseLoading } from "@/lib/hooks/useLoading";
-import { useRequireUser as mockUseRequireUser } from "@/lib/hooks/useRequireUser";
-import { listenToBook as mockListenToBook } from "@/services/book.service";
+import { useParams } from "next/navigation";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
+import { listenToBook } from "@/services/book.service";
 import {
-  listenToTransactions as mockListenToTransactions,
-  addTransaction as mockAddTransaction,
+  listenToTransactions,
+  addTransaction,
 } from "@/services/transaction.service";
-import { Book } from "@/lib/collections/Book";
-import Transaction from "@/lib/collections/Transaction";
+import { calculateBalance } from "@/lib/utils/calculateBalance";
 import "@testing-library/jest-dom";
 
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(),
 }));
 
-jest.mock("@/lib/hooks/useLoading", () => ({
-  __esModule: true,
-  useLoading: jest.fn(),
-}));
 jest.mock("@/lib/hooks/useRequireUser", () => ({
-  __esModule: true,
   useRequireUser: jest.fn(),
 }));
+
 jest.mock("@/services/book.service", () => ({
-  __esModule: true,
   listenToBook: jest.fn(),
 }));
+
 jest.mock("@/services/transaction.service", () => ({
-  __esModule: true,
   listenToTransactions: jest.fn(),
   addTransaction: jest.fn(),
 }));
 
-jest.mock("@/app/loading", () => ({
-  __esModule: true,
-  default: () => <div data-testid="loading">Loading...</div>,
-}));
-jest.mock("@/app/books/[slug]/BookNotFound", () => ({
-  __esModule: true,
-  default: () => <div data-testid="book-not-found">Not found</div>,
-}));
-jest.mock("@/app/books/[slug]/BookDetails", () => ({
-  __esModule: true,
-  default: ({ book }: any) => (
-    <div data-testid="book-details">{book?.name}</div>
-  ),
-}));
-jest.mock("@/app/books/[slug]/BookTransactions", () => ({
-  __esModule: true,
-  default: ({ transactions, loading, error, onSave }: any) => (
-    <div>
-      <div data-testid="transactions-loading">
-        {loading ? "loading" : "not-loading"}
-      </div>
-      <div data-testid="transactions-error">{error}</div>
-      <div data-testid="transactions-count">{transactions.length}</div>
-      <button
-        data-testid="save-transaction"
-        onClick={() =>
-          onSave({
-            amount: 1,
-            type: "income",
-            description: "desc",
-            date: {},
-            bookId: "b",
-            userId: "u",
-            categoryId: "cat",
-          })
-        }
-      >
-        Save Transaction
-      </button>
-    </div>
-  ),
+jest.mock("@/lib/utils/calculateBalance", () => ({
+  calculateBalance: jest.fn(() => 100),
 }));
 
-const mockSetLoaded = jest.fn();
-const mockReset = jest.fn();
-
-const book: Book = {
-  id: "b1",
-  name: "Test Book",
-  description: "desc",
-  balance: 100,
-};
-const user = { uid: "u" };
-const transactions: Transaction[] = [
-  {
-    id: "t1",
-    userId: "u",
-    bookId: "b1",
-    description: "D1",
-    amount: 10,
-    type: "income",
-    date: {} as any,
-    categoryId: "cat1",
-  },
-  {
-    id: "t2",
-    userId: "u",
-    bookId: "b1",
-    description: "D2",
-    amount: 5,
-    type: "expense",
-    date: {} as any,
-    categoryId: "cat2",
-  },
-];
+jest.mock("@/app/loading", () => () => <div>Loading...</div>);
+jest.mock("@/app/books/[slug]/BookDetails", () => ({ book, balance }: any) => (
+  <div>
+    <h3>Book Details</h3>
+    <p>{book.name}</p>
+    <p>{balance}</p>
+  </div>
+));
+jest.mock("@/app/books/[slug]/BookNotFound", () => () => (
+  <div>Book Not Found</div>
+));
+jest.mock(
+  "@/app/books/[slug]/BookTransactions",
+  () =>
+    ({ transactions, loading, onSave }: any) =>
+      (
+        <div>
+          <h3>Transactions</h3>
+          {loading && <p>Loading Transactions...</p>}
+          <button onClick={() => onSave({ amount: 200 })}>
+            Save Transaction
+          </button>
+          {transactions.map((tx: any) => (
+            <p key={tx.id}>{tx.description}</p>
+          ))}
+        </div>
+      )
+);
+jest.mock("@/app/books/[slug]/CategorySidebar", () => ({ transactions }: any) => (
+  <div>
+    <h3>Category Sidebar</h3>
+    {transactions.map((tx: any) => (
+      <p key={tx.id}>{tx.category}</p>
+    ))}
+  </div>
+));
 
 describe("BookPage", () => {
+  const mockSlug = "book1";
+  const mockUser = { uid: "testUserId" };
+  const mockBook = {
+    id: mockSlug,
+    name: "Test Book",
+    transactionIds: ["tx1", "tx2"],
+  };
+  const mockTransactions = [
+    { id: "tx1", description: "Transaction 1", category: "Category 1" },
+    { id: "tx2", description: "Transaction 2", category: "Category 2" },
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (require("next/navigation").useParams as jest.Mock).mockReturnValue({
-      slug: "test-slug",
+    (useParams as jest.Mock).mockReturnValue({ slug: mockSlug });
+    (useRequireUser as jest.Mock).mockReturnValue(mockUser);
+    (listenToBook as jest.Mock).mockImplementation((_id, callback) => {
+      callback(mockBook);
+      return jest.fn();
     });
-    (mockUseRequireUser as jest.Mock).mockReturnValue(user);
-    (mockListenToBook as jest.Mock).mockReturnValue(jest.fn());
-    (mockListenToTransactions as jest.Mock).mockReturnValue(jest.fn());
-    (mockAddTransaction as jest.Mock).mockResolvedValue(undefined);
+    (listenToTransactions as jest.Mock).mockImplementation((_ids, callback) => {
+      callback(mockTransactions);
+      return jest.fn();
+    });
+    (addTransaction as jest.Mock).mockResolvedValue(undefined);
   });
 
-  it("renders loading screen when loading", () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: true,
-      data: undefined,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
+  it("renders loading state initially", () => {
+    (listenToBook as jest.Mock).mockImplementation(() => jest.fn());
+
     render(<BookPage />);
-    expect(screen.getByTestId("loading")).toBeInTheDocument();
+
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
-  it("renders not found when no book", () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: undefined,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-    render(<BookPage />);
-    expect(screen.getByTestId("book-not-found")).toBeInTheDocument();
-  });
-
-  it("renders book details and transactions", async () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: book,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-
-    let transactionsCb: (t: Transaction[]) => void = () => {};
-    (mockListenToTransactions as jest.Mock).mockImplementation(
-      (_uid, _slug, cb) => {
-        transactionsCb = cb;
-        return jest.fn();
-      }
-    );
-
-    await act(async () => {
-      render(<BookPage />);
-    });
-
-    await act(async () => {
-      transactionsCb(transactions);
-    });
-
-    expect(screen.getByTestId("book-details")).toHaveTextContent("Test Book");
-    expect(screen.getByTestId("transactions-count")).toHaveTextContent("2");
-    expect(screen.getByTestId("transactions-loading")).toHaveTextContent(
-      "not-loading"
-    );
-  });
-
-  it("shows loading state for transactions", async () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: book,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-
-    await act(async () => {
-      render(<BookPage />);
-    });
-
-    expect(screen.getByTestId("transactions-loading")).toHaveTextContent(
-      "loading"
-    );
-  });
-
-  it("calls addTransaction with correct args", async () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: book,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-
-    await act(async () => {
-      render(<BookPage />);
-    });
-
-    fireEvent.click(screen.getByTestId("save-transaction"));
-
-    await waitFor(() =>
-      expect(mockAddTransaction).toHaveBeenCalledWith(
-        "u",
-        "test-slug",
-        expect.objectContaining({
-          amount: 1,
-          type: "income",
-          description: "desc",
-        })
-      )
-    );
-  });
-
-  it("resets and subscribes to book and transactions on mount", async () => {
-    (mockUseLoading as jest.Mock).mockReturnValue({
-      loading: false,
-      data: book,
-      setLoaded: mockSetLoaded,
-      reset: mockReset,
-    });
-
-    let bookCb: (b: Book | undefined) => void = () => {};
-    (mockListenToBook as jest.Mock).mockImplementation((_uid, _slug, cb) => {
-      bookCb = cb;
+  it("renders BookNotFound if book is not found", () => {
+    (listenToBook as jest.Mock).mockImplementation((_id, callback) => {
+      callback(undefined);
       return jest.fn();
     });
 
-    let transactionsCb: (t: Transaction[]) => void = () => {};
-    (mockListenToTransactions as jest.Mock).mockImplementation(
-      (_uid, _slug, cb) => {
-        transactionsCb = cb;
-        return jest.fn();
-      }
-    );
+    render(<BookPage />);
 
-    await act(async () => {
-      render(<BookPage />);
-    });
+    expect(screen.getByText("Book Not Found")).toBeInTheDocument();
+  });
 
-    expect(mockReset).toHaveBeenCalled();
-    act(() => {
-      bookCb(book);
-      transactionsCb(transactions);
+  it("renders BookDetails and BookTransactions when book is loaded", async () => {
+    render(<BookPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Book Details")).toBeInTheDocument();
+      expect(screen.getByText("Test Book")).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
+      expect(screen.getByText("Transactions")).toBeInTheDocument();
+      expect(screen.getByText("Transaction 1")).toBeInTheDocument();
+      expect(screen.getByText("Transaction 2")).toBeInTheDocument();
     });
-    expect(mockSetLoaded).toHaveBeenCalledWith(book);
+  });
+
+  it("handles saving a transaction", async () => {
+    render(<BookPage />);
+
+    fireEvent.click(screen.getByText("Save Transaction"));
+
+    await waitFor(() => {
+      expect(addTransaction).toHaveBeenCalledWith(mockSlug, { amount: 200 });
+    });
+  });
+
+  it("renders the CategorySidebar", async () => {
+    render(<BookPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Category Sidebar")).toBeInTheDocument();
+      expect(screen.getByText("Category 1")).toBeInTheDocument();
+      expect(screen.getByText("Category 2")).toBeInTheDocument();
+    });
   });
 });

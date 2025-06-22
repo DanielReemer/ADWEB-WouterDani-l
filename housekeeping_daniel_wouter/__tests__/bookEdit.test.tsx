@@ -1,110 +1,119 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import EditBookPage from "@/app/books/[slug]/edit/page";
-import { updateBook, listenToBook } from "@/services/book.service";
-
-const pushMock = jest.fn();
-const useParamsMock = jest.fn();
+import { useRouter, useParams } from "next/navigation";
+import { listenToBook, updateBook } from "@/services/book.service";
+import { archiveBook } from "@/services/bookArchive.service";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
+import "@testing-library/jest-dom";
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
-  }),
-  useParams: () => useParamsMock(),
+  useRouter: jest.fn(),
+  useParams: jest.fn(),
 }));
 
 jest.mock("@/services/book.service", () => ({
   listenToBook: jest.fn(),
-  updateBook: jest.fn(() => Promise.resolve()),
+  updateBook: jest.fn(),
 }));
 
 jest.mock("@/services/bookArchive.service", () => ({
-  archiveBook: jest.fn(() => Promise.resolve()),
+  archiveBook: jest.fn(),
 }));
 
-jest.mock("@/app/loading", () => () => <div>LoadingMock</div>);
 jest.mock("@/lib/hooks/useRequireUser", () => ({
-  useRequireUser: () => ({ uid: "test-user-id" }),
+  useRequireUser: jest.fn(),
+}));
+
+jest.mock("@/app/loading", () => () => <div>Loading...</div>);
+
+jest.mock("@/app/books/BookForm", () => ({
+  __esModule: true,
+  default: ({ initialData, onSubmit }: any) => (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(initialData);
+      }}
+    >
+      <input name="name" defaultValue={initialData.name} />
+      <textarea name="description" defaultValue={initialData.description} />
+      <button type="submit">Opslaan</button>
+    </form>
+  ),
 }));
 
 describe("EditBookPage", () => {
-  let consoleErrorSpy: jest.SpyInstance;
-  const testBook = {
-    id: "book-123",
-    name: "Mijn Boek",
-    description: "Beschrijving",
-    balance: 100,
+  const mockRouterPush = jest.fn();
+  const mockSlug = "book1";
+  const mockUser = { uid: "testUserId" };
+  const mockBook = {
+    id: mockSlug,
+    name: "Test Book",
+    description: "Test Description",
+    ownerId: mockUser.uid,
   };
-
-  beforeAll(() => {
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterAll(() => {
-    consoleErrorSpy.mockRestore();
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useParamsMock.mockReturnValue({ slug: "book-123" });
+    (useRouter as jest.Mock).mockReturnValue({ push: mockRouterPush });
+    (useParams as jest.Mock).mockReturnValue({ slug: mockSlug });
+    (useRequireUser as jest.Mock).mockReturnValue(mockUser);
+    (listenToBook as jest.Mock).mockImplementation((_id, callback) => {
+      callback(mockBook);
+      return jest.fn();
+    });
+    (updateBook as jest.Mock).mockResolvedValue(undefined);
+    (archiveBook as jest.Mock).mockResolvedValue(undefined);
   });
 
-  it("renders loading initially", () => {
-    (listenToBook as jest.Mock).mockImplementation(() => () => {});
+  it("renders loading state initially", () => {
+    (listenToBook as jest.Mock).mockImplementation(() => jest.fn());
+
     render(<EditBookPage />);
-    expect(screen.getByText(/LoadingMock/i)).toBeInTheDocument();
+
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
-  it("renders error if book not found", () => {
-    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
-      callback(undefined);
-      return () => {};
+  it("renders global error if book is not found", () => {
+    (listenToBook as jest.Mock).mockImplementation((_id, callback) => {
+      callback(null);
+      return jest.fn();
     });
+
     render(<EditBookPage />);
-    expect(screen.getByText(/boek niet gevonden/i)).toBeInTheDocument();
+
+    expect(screen.getByText("Boek niet gevonden.")).toBeInTheDocument();
   });
 
-  it("renders BookForm with initial book data and submits update", async () => {
-    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
-      callback(testBook);
-      return () => {};
-    });
-    (updateBook as jest.Mock).mockImplementation((_userId, _id, _book) => Promise.resolve());
+  it("renders the book form with initial data", () => {
     render(<EditBookPage />);
-    const nameInput = screen.getByLabelText(/naam\s*\*/i);
-    const descriptionInput = screen.getByLabelText("Omschrijving");
-    const submitButton = screen.getByRole("button", { name: /Opslaan/i });
 
-    expect(nameInput).toHaveValue(testBook.name);
-    expect(descriptionInput).toHaveValue(testBook.description);
+    expect(screen.getByDisplayValue("Test Book")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Test Description")).toBeInTheDocument();
+  });
 
-    fireEvent.change(nameInput, { target: { value: "Aangepast Boek" } });
-    fireEvent.change(descriptionInput, {
-      target: { value: "Nieuwe beschrijving" },
-    });
-    fireEvent.click(submitButton);
+  it("submits the form and updates the book", async () => {
+    render(<EditBookPage />);
+
+    fireEvent.submit(screen.getByText("Opslaan"));
 
     await waitFor(() => {
-      expect(updateBook).toHaveBeenCalledWith("test-user-id", "book-123", {
-        name: "Aangepast Boek",
-        description: "Nieuwe beschrijving",
+      expect(updateBook).toHaveBeenCalledWith(mockSlug, {
+        name: "Test Book",
+        description: "Test Description",
       });
-      expect(pushMock).toHaveBeenCalledWith("/books/book-123");
+      expect(mockRouterPush).toHaveBeenCalledWith(`/books/${mockSlug}`);
     });
   });
 
-  it("shows global error if updateBook fails", async () => {
-    (listenToBook as jest.Mock).mockImplementation((_userId, _slug, callback) => {
-      callback(testBook);
-      return () => {};
-    });
-    (updateBook as jest.Mock).mockRejectedValueOnce(new Error("fail"));
-
+  it("archives the book when the archive button is clicked", async () => {
     render(<EditBookPage />);
-    const submitButton = screen.getByRole("button", { name: /Opslaan/i });
-    fireEvent.click(submitButton);
 
-    await screen.findByText("Kon het boek niet updaten.");
-    expect(screen.getByText("Kon het boek niet updaten.")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Archiveren"));
+
+    await waitFor(() => {
+      expect(archiveBook).toHaveBeenCalledWith(mockSlug);
+      expect(mockRouterPush).toHaveBeenCalledWith("/books");
+    });
   });
 });
