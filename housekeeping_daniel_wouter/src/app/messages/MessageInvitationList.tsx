@@ -4,7 +4,7 @@ import { acceptBookShare } from "@/services/book.service";
 import { respondToShareInvitation } from "@/services/bookShare.service";
 import { useRequireUser } from "@/lib/hooks/useRequireUser";
 
-type Invitation = {
+export type Invitation = {
   id: string;
   bookId: string;
   bookName: string;
