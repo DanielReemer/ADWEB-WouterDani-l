@@ -1,62 +1,110 @@
 import { render, screen } from "@testing-library/react";
 import BookDetails from "@/app/books/[slug]/BookDetails";
-import { Book } from "@/lib/collections/Book";
-import "@testing-library/jest-dom";
+import { useRequireUser } from "@/lib/hooks/useRequireUser";
+import Link from "next/link";
+import '@testing-library/jest-dom';
 
-jest.mock("next/link", () => ({ children, href, className }: any) => (
-  <a href={href} className={className} data-testid="link">
-    {children}
-  </a>
-));
-
-const baseBook: Book = {
-  id: "b1",
-  name: "Testboek",
-};
-
-it("renders book name and edit link", () => {
-  render(<BookDetails book={baseBook} balance={0} />);
-  expect(screen.getByText("Testboek")).toBeInTheDocument();
-  const link = screen.getByTestId("link");
-  expect(link).toHaveAttribute("href", "/books/b1/edit");
-  expect(link).toHaveTextContent("Bewerk dit boek");
-});
-
-it("renders description if present", () => {
-  render(
-    <BookDetails
-      book={{
-        ...baseBook,
-        description: "Beschrijving tekst",
-      }}
-      balance={0}
-    />
+jest.mock("next/link", () => {
+  return ({ href, children, className }: any) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   );
-  expect(screen.getByText("Beschrijving tekst")).toBeInTheDocument();
-  expect(screen.getByText("Beschrijving")).toBeInTheDocument();
 });
 
-it("does not render description block if description not present", () => {
-  render(<BookDetails book={baseBook} balance={0} />);
-  expect(screen.queryByText("Beschrijving")).not.toBeInTheDocument();
-});
+jest.mock("@/lib/hooks/useRequireUser", () => ({
+  useRequireUser: jest.fn(),
+}));
 
-it("renders green balance if positive", () => {
-  render(<BookDetails book={baseBook} balance={150.75} />);
-  expect(screen.getByText("Balans")).toBeInTheDocument();
-  const balance = screen.getByText(/€\s+150,75/);
-  expect(balance).toBeInTheDocument();
-  expect(balance).toHaveClass("text-green-600");
-});
+describe("BookDetails", () => {
+  const mockBook = {
+    id: "book1",
+    name: "Test Book",
+    description: "This is a test book description.",
+    ownerId: "testUserId",
+  };
 
-it("renders red balance if negative", () => {
-  render(<BookDetails book={baseBook} balance={-42} />);
-  const balance = screen.getByText(/€\s+-42,00/);
-  expect(balance).toHaveClass("text-red-600");
-});
+  const mockBalance = 123.45;
 
-it("does not render balance block if balance is undefined", () => {
-  // @ts-expect-error purposely omitting balance to test fallback
-  render(<BookDetails book={baseBook} />);
-  expect(screen.queryByText("Balans")).not.toBeInTheDocument();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("renders the book name and description", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(<BookDetails book={mockBook} balance={mockBalance} />);
+
+    expect(screen.getByText("Test Book")).toBeInTheDocument();
+    expect(screen.getByText("Beschrijving")).toBeInTheDocument();
+    expect(
+      screen.getByText("This is a test book description.")
+    ).toBeInTheDocument();
+  });
+
+  it("renders the balance with correct formatting", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(<BookDetails book={mockBook} balance={mockBalance} />);
+
+    expect(screen.getByText("Balans")).toBeInTheDocument();
+    expect(screen.getByText("€ 123,45")).toBeInTheDocument();
+  });
+
+  it("renders a negative balance in red", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(<BookDetails book={mockBook} balance={-50.67} />);
+
+    expect(screen.getByText("€ -50,67")).toHaveClass("text-red-600");
+  });
+
+  it("renders a positive balance in green", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(<BookDetails book={mockBook} balance={50.67} />);
+
+    expect(screen.getByText("€ 50,67")).toHaveClass("text-green-600");
+  });
+
+  it("renders the edit link if user is the owner", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(<BookDetails book={mockBook} balance={mockBalance} />);
+
+    const editLink = screen.getByText("Bewerk dit boek");
+    expect(editLink).toBeInTheDocument();
+    expect(editLink).toHaveAttribute("href", "/books/book1/edit");
+  });
+
+  it("does not render the edit link if user is not the owner", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "anotherUserId" });
+
+    render(<BookDetails book={mockBook} balance={mockBalance} />);
+
+    expect(screen.queryByText("Bewerk dit boek")).not.toBeInTheDocument();
+  });
+
+  it("does not render the description section if description is empty", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(
+      <BookDetails
+        book={{ ...mockBook, description: "" }}
+        balance={mockBalance}
+      />
+    );
+
+    expect(screen.queryByText("Beschrijving")).not.toBeInTheDocument();
+  });
+
+  it("does not render the balance section if balance is undefined", () => {
+    (useRequireUser as jest.Mock).mockReturnValue({ uid: "testUserId" });
+
+    render(
+      <BookDetails book={mockBook} balance={undefined as unknown as number} />
+    );
+
+    expect(screen.queryByText("Balans")).not.toBeInTheDocument();
+  });
 });

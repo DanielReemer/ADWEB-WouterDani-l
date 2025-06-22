@@ -1,237 +1,112 @@
-import {
-  listenToArchivedBook,
-  listenToArchivedBooks,
-  addArchivedBook,
-  deleteArchivedBook,
-} from "@/services/archivedBook.service";
+import { listenToArchivedBooks } from "@/services/archivedBook.service";
+import { onSnapshot, query, where, collection, and } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { ArchivedBook } from "@/lib/collections/Book";
+
+jest.mock("firebase/firestore", () => ({
+  doc: jest.fn(),
+  onSnapshot: jest.fn(),
+  collection: jest.fn(),
+  addDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  query: jest.fn(),
+  and: jest.fn(),
+  or: jest.fn(),
+  where: jest.fn(),
+}));
 
 jest.mock("@/lib/firebase", () => ({
   db: {},
 }));
 
-const onSnapshotMock = jest.fn();
-const docMock = jest.fn();
-const collectionMock = jest.fn();
-const addDocMock = jest.fn();
-const deleteDocMock = jest.fn();
+describe("listenToArchivedBooks", () => {
+  const mockUserId = "testUserId";
+  const mockListener = jest.fn();
+  const mockQuery = {};
+  const mockCollection = {};
+  const mockSnapshot = {
+    forEach: jest.fn(),
+  };
 
-jest.mock("firebase/firestore", () => ({
-  doc: (...args: any[]) => docMock(...args),
-  onSnapshot: (...args: any[]) => onSnapshotMock(...args),
-  collection: (...args: any[]) => collectionMock(...args),
-  addDoc: (...args: any[]) => addDocMock(...args),
-  deleteDoc: (...args: any[]) => deleteDocMock(...args),
-}));
-
-describe("archivedBooks firestore wrappers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (collection as jest.Mock).mockReturnValue(mockCollection);
+    (query as jest.Mock).mockReturnValue(mockQuery);
+    (and as jest.Mock).mockReturnValue({});
+    (where as jest.Mock).mockImplementation((field, op, value) => ({ field, op, value }));
+    (onSnapshot as jest.Mock).mockImplementation((_query, callback) => {
+      callback(mockSnapshot);
+      return jest.fn();
+    });
   });
 
-  describe("listenToArchivedBook", () => {
-    it("calls onSnapshot with correct params and processes book data", () => {
-      const userId = "user";
-      const id = "book1";
-      const listener = jest.fn();
+  it("should set up a query and listen to archived books", () => {
+    const mockDocSnap1 = {
+      exists: () => true,
+      id: "book1",
+      data: () => ({
+        name: "Book 1",
+        description: "Description 1",
+        ownerId: mockUserId,
+        transactionIds: ["txn1"],
+        sharedWith: ["user1"],
+        archivedAt: { toDate: () => new Date("2025-06-22T00:00:00Z") },
+      }),
+    };
 
-      const docSnapMock = {
-        id,
-        data: jest.fn().mockReturnValue({
-          name: "Test Book",
-          description: "Desc",
-          balance: 100,
-          archivedAt: { toDate: () => new Date("2023-01-01") },
-        }),
-      };
+    const mockDocSnap2 = {
+      exists: () => true,
+      id: "book2",
+      data: () => ({
+        name: "Book 2",
+        description: "Description 2",
+        ownerId: mockUserId,
+        transactionIds: ["txn2"],
+        sharedWith: ["user2"],
+        archivedAt: { toDate: () => new Date("2025-06-21T00:00:00Z") },
+      }),
+    };
 
-      onSnapshotMock.mockImplementation((_docRef, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
-      docMock.mockReturnValue("docRef");
+    mockSnapshot.forEach.mockImplementation((callback) => {
+      callback(mockDocSnap1);
+      callback(mockDocSnap2);
+    });
 
-      const unsub = listenToArchivedBook(userId, id, listener);
+    const unsubscribe = listenToArchivedBooks(mockUserId, mockListener);
 
-      expect(docMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "archivedBooks",
-        id
-      );
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "docRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith({
+    expect(collection).toHaveBeenCalledWith(db, "books");
+    expect(where).toHaveBeenCalledWith("archivedAt", "!=", null);
+    expect(where).toHaveBeenCalledWith("ownerId", "==", mockUserId);
+    expect(and).toHaveBeenCalled();
+    expect(query).toHaveBeenCalledWith(mockCollection, expect.anything());
+    expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
+    expect(mockListener).toHaveBeenCalledWith([
+      {
         id: "book1",
-        name: "Test Book",
-        description: "Desc",
-        balance: 100,
-        archivedAt: new Date("2023-01-01"),
-      });
-      expect(unsub).toBe("unsub");
-    });
+        name: "Book 1",
+        description: "Description 1",
+        ownerId: mockUserId,
+        transactionIds: ["txn1"],
+        sharedWith: ["user1"],
+        archivedAt: new Date("2025-06-22T00:00:00Z"),
+      },
+      {
+        id: "book2",
+        name: "Book 2",
+        description: "Description 2",
+        ownerId: mockUserId,
+        transactionIds: ["txn2"],
+        sharedWith: ["user2"],
+        archivedAt: new Date("2025-06-21T00:00:00Z"),
+      },
+    ]);
 
-    it("calls listener with undefined if no data", () => {
-      const userId = "u";
-      const id = "bid";
-      const listener = jest.fn();
-
-      const docSnapMock = {
-        id,
-        data: jest.fn().mockReturnValue(undefined),
-      };
-
-      onSnapshotMock.mockImplementation((_docRef, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
-      docMock.mockReturnValue("docRef");
-
-      listenToArchivedBook(userId, id, listener);
-
-      expect(listener).toHaveBeenCalledWith(undefined);
-    });
+    expect(typeof unsubscribe).toBe("function");
   });
 
-  describe("listenToArchivedBooks", () => {
-    it("calls onSnapshot with correct collection and processes books", () => {
-      const userId = "user";
-      const listener = jest.fn();
+  it("should call listener with undefined if no books exist", () => {
+    mockSnapshot.forEach.mockImplementation(() => {});
+    listenToArchivedBooks(mockUserId, mockListener);
 
-      const docSnaps = [
-        {
-          id: "1",
-          data: jest.fn().mockReturnValue({
-            name: "Book1",
-            description: "Desc1",
-            balance: 10,
-            archivedAt: { toDate: () => new Date("2023-01-01") },
-          }),
-        },
-        {
-          id: "2",
-          data: jest.fn().mockReturnValue({
-            name: "Book2",
-            description: "",
-            balance: 0,
-            archivedAt: { toDate: () => new Date("2023-02-01") },
-          }),
-        },
-      ];
-
-      const snapshotMock = {
-        forEach: (cb: any) => docSnaps.forEach(cb),
-      };
-
-      onSnapshotMock.mockImplementation((_colRef, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-      collectionMock.mockReturnValue("colRef");
-
-      const unsub = listenToArchivedBooks(userId, listener);
-
-      expect(collectionMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "archivedBooks"
-      );
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "colRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith([
-        {
-          id: "1",
-          name: "Book1",
-          description: "Desc1",
-          balance: 10,
-          archivedAt: new Date("2023-01-01"),
-        },
-        {
-          id: "2",
-          name: "Book2",
-          description: "",
-          balance: 0,
-          archivedAt: new Date("2023-02-01"),
-        },
-      ]);
-      expect(unsub).toBe("unsub");
-    });
-
-    it("calls listener with empty array if no books", () => {
-      const userId = "user";
-      const listener = jest.fn();
-      const snapshotMock = {
-        forEach: (cb: any) => {},
-      };
-
-      onSnapshotMock.mockImplementation((_colRef, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-      collectionMock.mockReturnValue("colRef");
-
-      listenToArchivedBooks(userId, listener);
-
-      expect(listener).toHaveBeenCalledWith([]);
-    });
-  });
-
-  describe("addArchivedBook", () => {
-    it("calls addDoc with correct data", async () => {
-      const userId = "user";
-      const book: ArchivedBook = {
-        id: "b1",
-        name: "B",
-        description: "D",
-        balance: 5,
-        archivedAt: new Date("2024-01-01"),
-      };
-
-      collectionMock.mockReturnValue("colRef");
-      addDocMock.mockResolvedValue(undefined);
-
-      await addArchivedBook(userId, book);
-
-      expect(collectionMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "archivedBooks"
-      );
-      expect(addDocMock).toHaveBeenCalledWith("colRef", {
-        name: "B",
-        description: "D",
-        balance: 5,
-        archivedAt: expect.any(Date),
-      });
-    });
-  });
-
-  describe("deleteArchivedBook", () => {
-    it("calls deleteDoc with correct doc ref", async () => {
-      const userId = "user";
-      const id = "b1";
-
-      docMock.mockReturnValue("docRef");
-      deleteDocMock.mockResolvedValue(undefined);
-
-      await deleteArchivedBook(userId, id);
-
-      expect(docMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "archivedBooks",
-        id
-      );
-      expect(deleteDocMock).toHaveBeenCalledWith("docRef");
-    });
+    expect(mockListener).toHaveBeenCalledWith(undefined);
   });
 });

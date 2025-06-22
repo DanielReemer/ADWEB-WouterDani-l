@@ -4,227 +4,290 @@ import {
   addBook,
   updateBook,
   deleteBook,
+  acceptBookShare,
 } from "@/services/book.service";
+import {
+  doc,
+  onSnapshot,
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  query,
+  where,
+  and,
+  or,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
+
+jest.mock("firebase/firestore", () => ({
+  doc: jest.fn(),
+  onSnapshot: jest.fn(),
+  collection: jest.fn(),
+  addDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  getDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  or: jest.fn(),
+  and: jest.fn(),
+}));
 
 jest.mock("@/lib/firebase", () => ({
   db: {},
 }));
 
-const onSnapshotMock = jest.fn();
-const docMock = jest.fn();
-const collectionMock = jest.fn();
-const addDocMock = jest.fn();
-const updateDocMock = jest.fn();
-const deleteDocMock = jest.fn();
+describe("listenToBook", () => {
+  const mockBookId = "testBookId";
+  const mockListener = jest.fn();
+  const mockDocSnap = {
+    exists: jest.fn(),
+    data: jest.fn(),
+    id: mockBookId,
+  };
 
-jest.mock("firebase/firestore", () => ({
-  doc: (...args: any[]) => docMock(...args),
-  onSnapshot: (...args: any[]) => onSnapshotMock(...args),
-  collection: (...args: any[]) => collectionMock(...args),
-  addDoc: (...args: any[]) => addDocMock(...args),
-  updateDoc: (...args: any[]) => updateDocMock(...args),
-  deleteDoc: (...args: any[]) => deleteDocMock(...args),
-}));
-
-describe("books firestore wrappers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (doc as jest.Mock).mockReturnValue({});
+    (onSnapshot as jest.Mock).mockImplementation((_docRef, callback) => {
+      callback(mockDocSnap);
+      return jest.fn();
+    });
   });
 
-  describe("listenToBook", () => {
-    it("calls onSnapshot with correct params and processes book data", () => {
-      const userId = "user";
-      const id = "book1";
-      const listener = jest.fn();
+  it("should call listener with book data if book exists and is not archived", () => {
+    mockDocSnap.exists.mockReturnValue(true);
+    mockDocSnap.data.mockReturnValue({
+      ownerId: "testUserId",
+      name: "Test Book",
+      description: "Test Description",
+      transactionIds: [],
+      sharedWith: [],
+      archivedAt: null,
+    });
 
-      const docSnapMock = {
-        id,
-        data: jest.fn().mockReturnValue({
-          name: "Book",
-          description: "Desc",
-          balance: 42,
-        }),
-      };
+    listenToBook(mockBookId, mockListener);
 
-      onSnapshotMock.mockImplementation((_docRef, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
-      docMock.mockReturnValue("docRef");
+    expect(mockListener).toHaveBeenCalledWith({
+      id: mockBookId,
+      ownerId: "testUserId",
+      name: "Test Book",
+      description: "Test Description",
+      transactionIds: [],
+      sharedWith: [],
+    });
+  });
 
-      const unsub = listenToBook(userId, id, listener);
+  it("should call listener with undefined if book does not exist", () => {
+    mockDocSnap.exists.mockReturnValue(false);
 
-      expect(docMock).toHaveBeenCalledWith(db, "users", userId, "books", id);
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "docRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith({
+    listenToBook(mockBookId, mockListener);
+
+    expect(mockListener).toHaveBeenCalledWith(undefined);
+  });
+
+  it("should not call listener if book is archived", () => {
+    mockDocSnap.exists.mockReturnValue(true);
+    mockDocSnap.data.mockReturnValue({
+      archivedAt: new Date(),
+    });
+
+    listenToBook(mockBookId, mockListener);
+
+    expect(mockListener).not.toHaveBeenCalled();
+  });
+});
+
+describe("listenToBooks", () => {
+  const mockUserId = "testUserId";
+  const mockListener = jest.fn();
+  const mockQuery = {};
+  const mockCollection = {};
+  const mockSnapshot = {
+    forEach: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (collection as jest.Mock).mockReturnValue(mockCollection);
+    (query as jest.Mock).mockReturnValue(mockQuery);
+    (and as jest.Mock).mockReturnValue({});
+    (where as jest.Mock).mockImplementation((field, op, value) => ({
+      field,
+      op,
+      value,
+    }));
+    (or as jest.Mock).mockImplementation(() => ({}));
+    (onSnapshot as jest.Mock).mockImplementation((_query, callback) => {
+      callback(mockSnapshot);
+      return jest.fn();
+    });
+  });
+
+  it("should call listener with books list", () => {
+    const mockDocSnap1 = {
+      exists: () => true,
+      id: "book1",
+      data: () => ({
+        name: "Book 1",
+        description: "Description 1",
+        ownerId: mockUserId,
+        transactionIds: [],
+        sharedWith: [],
+      }),
+    };
+
+    const mockDocSnap2 = {
+      exists: () => true,
+      id: "book2",
+      data: () => ({
+        name: "Book 2",
+        description: "Description 2",
+        ownerId: mockUserId,
+        transactionIds: [],
+        sharedWith: [],
+      }),
+    };
+
+    mockSnapshot.forEach.mockImplementation((callback) => {
+      callback(mockDocSnap1);
+      callback(mockDocSnap2);
+    });
+
+    listenToBooks(mockUserId, mockListener);
+
+    expect(mockListener).toHaveBeenCalledWith([
+      {
         id: "book1",
-        name: "Book",
-        description: "Desc",
-        balance: 42,
-      });
-      expect(unsub).toBe("unsub");
-    });
-
-    it("calls listener with undefined if no data", () => {
-      const userId = "u";
-      const id = "bid";
-      const listener = jest.fn();
-
-      const docSnapMock = {
-        id,
-        data: jest.fn().mockReturnValue(undefined),
-      };
-
-      onSnapshotMock.mockImplementation((_docRef, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
-      docMock.mockReturnValue("docRef");
-
-      listenToBook(userId, id, listener);
-
-      expect(listener).toHaveBeenCalledWith(undefined);
-    });
+        name: "Book 1",
+        description: "Description 1",
+        ownerId: mockUserId,
+        transactionIds: [],
+        sharedWith: [],
+      },
+      {
+        id: "book2",
+        name: "Book 2",
+        description: "Description 2",
+        ownerId: mockUserId,
+        transactionIds: [],
+        sharedWith: [],
+      },
+    ]);
   });
 
-  describe("listenToBooks", () => {
-    it("calls onSnapshot with correct collection and processes books", () => {
-      const userId = "user";
-      const listener = jest.fn();
+  it("should call listener with undefined if no books exist", () => {
+    mockSnapshot.forEach.mockImplementation(() => {});
 
-      const docSnaps = [
-        {
-          id: "1",
-          data: jest.fn().mockReturnValue({
-            name: "A",
-            description: "D1",
-            balance: 10,
-          }),
-        },
-        {
-          id: "2",
-          data: jest.fn().mockReturnValue({
-            name: "B",
-            description: "",
-            balance: 20,
-          }),
-        },
-      ];
+    listenToBooks(mockUserId, mockListener);
 
-      const snapshotMock = {
-        forEach: (cb: any) => docSnaps.forEach(cb),
-      };
+    expect(mockListener).toHaveBeenCalledWith(undefined);
+  });
+});
 
-      onSnapshotMock.mockImplementation((_colRef, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-      collectionMock.mockReturnValue("colRef");
+describe("addBook", () => {
+  const mockUserId = "testUserId";
+  const mockBookFormData = {
+    name: "New Book",
+    description: "New Book Description",
+  };
 
-      const unsub = listenToBooks(userId, listener);
-
-      expect(collectionMock).toHaveBeenCalledWith(db, "users", userId, "books");
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "colRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith([
-        {
-          id: "1",
-          name: "A",
-          description: "D1",
-          balance: 10,
-        },
-        {
-          id: "2",
-          name: "B",
-          description: "",
-          balance: 20,
-        },
-      ]);
-      expect(unsub).toBe("unsub");
-    });
-
-    it("calls listener with empty array if no books", () => {
-      const userId = "user";
-      const listener = jest.fn();
-      const snapshotMock = {
-        forEach: (cb: any) => {},
-      };
-
-      onSnapshotMock.mockImplementation((_colRef, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-      collectionMock.mockReturnValue("colRef");
-
-      listenToBooks(userId, listener);
-
-      expect(listener).toHaveBeenCalledWith([]);
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (addDoc as jest.Mock).mockResolvedValue(undefined);
   });
 
-  describe("addBook", () => {
-    it("calls addDoc with correct data", async () => {
-      const userId = "user";
-      const book = {
-        name: "N",
-        description: "D",
-        balance: 7,
-      };
+  it("should add a new book to the database", async () => {
+    await addBook(mockUserId, mockBookFormData);
 
-      collectionMock.mockReturnValue("colRef");
-      addDocMock.mockResolvedValue(undefined);
-
-      await addBook(userId, book);
-
-      expect(collectionMock).toHaveBeenCalledWith(db, "users", userId, "books");
-      expect(addDocMock).toHaveBeenCalledWith("colRef", {
-        name: "N",
-        description: "D",
-        balance: 7,
-      });
+    expect(addDoc).toHaveBeenCalledWith(collection(db, "books"), {
+      name: "New Book",
+      description: "New Book Description",
+      ownerId: mockUserId,
+      transactionIds: [],
+      sharedWith: [],
+      archivedAt: null,
     });
   });
+});
 
-  describe("updateBook", () => {
-    it("calls updateDoc with correct doc ref and data", async () => {
-      const userId = "user";
-      const id = "b1";
-      const book = {
-        name: "N",
-        description: "D",
-      };
+describe("updateBook", () => {
+  const mockBookId = "testBookId";
+  const mockBookData = {
+    name: "Updated Book",
+    description: "Updated Description",
+  };
 
-      docMock.mockReturnValue("docRef");
-      updateDocMock.mockResolvedValue(undefined);
-
-      await updateBook(userId, id, book);
-
-      expect(docMock).toHaveBeenCalledWith(db, "users", userId, "books", id);
-      expect(updateDocMock).toHaveBeenCalledWith("docRef", {
-        name: "N",
-        description: "D",
-      });
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (updateDoc as jest.Mock).mockResolvedValue(undefined);
   });
 
-  describe("deleteBook", () => {
-    it("calls deleteDoc with correct doc ref", async () => {
-      const userId = "user";
-      const id = "b1";
+  it("should update book in the database", async () => {
+    await updateBook(mockBookId, mockBookData);
 
-      docMock.mockReturnValue("docRef");
-      deleteDocMock.mockResolvedValue(undefined);
-
-      await deleteBook(userId, id);
-
-      expect(docMock).toHaveBeenCalledWith(db, "users", userId, "books", id);
-      expect(deleteDocMock).toHaveBeenCalledWith("docRef");
+    expect(updateDoc).toHaveBeenCalledWith(doc(db, "books", mockBookId), {
+      name: "Updated Book",
+      description: "Updated Description",
     });
+  });
+});
+
+describe("deleteBook", () => {
+  const mockUserId = "testUserId";
+  const mockBookId = "testBookId";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (deleteDoc as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it("should delete book from the database", async () => {
+    await deleteBook(mockUserId, mockBookId);
+
+    expect(deleteDoc).toHaveBeenCalledWith(doc(db, "books", mockBookId));
+  });
+});
+
+describe("acceptBookShare", () => {
+  const mockInvitationId = "invitation1";
+  const mockUserId = "testUserId";
+  const mockBookId = "book1";
+  const mockBookSnap = {
+    data: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (doc as jest.Mock).mockReturnValue({});
+    (getDoc as jest.Mock).mockResolvedValue(mockBookSnap);
+    (updateDoc as jest.Mock).mockResolvedValue(undefined);
+    (deleteDoc as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it("should add user to sharedWith list and delete the invitation", async () => {
+    mockBookSnap.data.mockReturnValue({
+      sharedWith: ["otherUserId"],
+    });
+
+    await acceptBookShare(mockInvitationId, mockUserId, mockBookId);
+
+    expect(updateDoc).toHaveBeenCalledWith(doc(db, "books", mockBookId), {
+      sharedWith: ["otherUserId", mockUserId],
+    });
+    expect(deleteDoc).toHaveBeenCalledWith(
+      doc(db, "shareInvitations", mockInvitationId)
+    );
+  });
+
+  it("should not update sharedWith if book data is undefined", async () => {
+    mockBookSnap.data.mockReturnValue(undefined);
+
+    await acceptBookShare(mockInvitationId, mockUserId, mockBookId);
+
+    expect(updateDoc).not.toHaveBeenCalled();
+    expect(deleteDoc).not.toHaveBeenCalled();
   });
 });

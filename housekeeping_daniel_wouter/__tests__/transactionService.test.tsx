@@ -3,317 +3,193 @@ import {
   listenToTransaction,
   addTransaction,
   updateTransaction,
+  updateTransactionCategory,
   deleteTransaction,
 } from "@/services/transaction.service";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  getDoc,
+  where,
+  and,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Transaction from "@/lib/collections/Transaction";
-import { Timestamp } from "firebase/firestore";
-import { act } from "react";
-
-jest.mock("@/lib/firebase", () => ({
-  db: {},
-}));
-
-const collectionMock = jest.fn();
-const docMock = jest.fn();
-const onSnapshotMock = jest.fn();
-const addDocMock = jest.fn();
-const updateDocMock = jest.fn();
-const deleteDocMock = jest.fn();
-const orderByMock = jest.fn();
-const queryMock = jest.fn();
-const actualFirestore = jest.requireActual("firebase/firestore");
+import { TransactionFormData } from "@/lib/Transaction";
 
 jest.mock("firebase/firestore", () => ({
-  collection: (...args: any[]) => collectionMock(...args),
-  doc: (...args: any[]) => docMock(...args),
-  onSnapshot: (...args: any[]) => onSnapshotMock(...args),
-  addDoc: (...args: any[]) => addDocMock(...args),
-  updateDoc: (...args: any[]) => updateDocMock(...args),
-  deleteDoc: (...args: any[]) => deleteDocMock(...args),
-  orderBy: (...args: any[]) => orderByMock(...args),
-  query: (...args: any[]) => queryMock(...args),
+  collection: jest.fn(),
+  doc: jest.fn(),
+  onSnapshot: jest.fn(),
+  addDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  and: jest.fn(),
+  orderBy: jest.fn(),
+  getDoc: jest.fn(),
+  Timestamp: {
+    fromDate: jest.fn((date) => ({
+      seconds: Math.floor(date.getTime() / 1000),
+      nanoseconds: (date.getTime() % 1000) * 1000000,
+    })),
+  },
 }));
 
+jest.mock("@/lib/firebase", () => ({
+  db: jest.fn(),
+}));
 
-describe("transaction service firestore wrappers", () => {
-  beforeEach(() => {
+describe("TransactionService", () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
   describe("listenToTransactions", () => {
-    it("calls onSnapshot with correct query and processes transactions", () => {
-      const userId = "user";
-      const bookId = "book";
-      const listener = jest.fn();
+    it("should call onSnapshot with correct query", () => {
+      const mockListener = jest.fn();
+      const mockTransactionIds = ["id1", "id2"];
+      const mockQuery = jest.fn();
+      (query as jest.Mock).mockReturnValue(mockQuery);
 
-      const docSnaps = [
-        {
-          id: "t1",
-          data: jest.fn().mockReturnValue({
-            description: "desc1",
-            amount: 100,
-            type: "income",
-            date: "date1",
-          }),
-        },
-        {
-          id: "t2",
-          data: jest.fn().mockReturnValue({
-            description: "desc2",
-            amount: 50,
-            type: "expense",
-            date: "date2",
-          }),
-        },
-      ];
+      listenToTransactions(mockTransactionIds, mockListener);
 
-      const snapshotMock = {
-        forEach: (cb: any) => docSnaps.forEach(cb),
-      };
-
-      collectionMock.mockReturnValue("colRef");
-      orderByMock.mockReturnValue("orderByRef");
-      queryMock.mockReturnValue("queryRef");
-
-      onSnapshotMock.mockImplementation((q, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-
-      const unsub = listenToTransactions(userId, bookId, listener);
-
-      expect(collectionMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "books",
-        bookId,
-        "transactions"
+      expect(query).toHaveBeenCalledWith(
+        collection(db, "transactions"),
+        and(
+          where("archivedAt", "==", null),
+          where("__name__", "in", mockTransactionIds)
+        ),
+        orderBy("date", "desc")
       );
-      expect(orderByMock).toHaveBeenCalledWith("date", "desc");
-      expect(queryMock).toHaveBeenCalledWith("colRef", "orderByRef");
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "queryRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith([
-        {
-          id: "t1",
-          userId: userId,
-          bookId: bookId,
-          description: "desc1",
-          amount: 100,
-          type: "income",
-          date: "date1",
-          categoryId: null,
-        },
-        {
-          id: "t2",
-          userId: userId,
-          bookId: bookId,
-          description: "desc2",
-          amount: 50,
-          type: "expense",
-          date: "date2",
-          categoryId: null,
-        },
-      ]);
-      expect(unsub).toBe("unsub");
+      expect(onSnapshot).toHaveBeenCalledWith(mockQuery, expect.any(Function));
     });
 
-    it("calls listener with empty array when no transactions exist", () => {
-      const userId = "user";
-      const bookId = "book";
-      const listener = jest.fn();
+    it("should return an empty array if transactionIds are empty", () => {
+      const mockListener = jest.fn();
 
-      const snapshotMock = {
-        forEach: (cb: any) => {},
-      };
+      const unsubscribe = listenToTransactions([], mockListener);
 
-      collectionMock.mockReturnValue("colRef");
-      orderByMock.mockReturnValue("orderByRef");
-      queryMock.mockReturnValue("queryRef");
-
-      onSnapshotMock.mockImplementation((q, cb) => {
-        cb(snapshotMock);
-        return "unsub";
-      });
-
-      listenToTransactions(userId, bookId, listener);
-
-      expect(listener).toHaveBeenCalledWith([]);
+      expect(mockListener).toHaveBeenCalledWith([]);
+      expect(unsubscribe).toEqual(expect.any(Function));
     });
   });
 
   describe("listenToTransaction", () => {
-    it("calls onSnapshot with correct doc ref and processes transaction", () => {
-      const userId = "user";
-      const bookId = "book";
-      const transactionId = "tid";
-      const listener = jest.fn();
+    it("should call onSnapshot with correct document reference", () => {
+      const mockTransactionId = "transaction1";
+      const mockListener = jest.fn();
+      const mockDoc = { id: mockTransactionId };
 
-      const docSnapMock = {
-        id: transactionId,
-        data: jest.fn().mockReturnValue({
-          description: "desc",
-          amount: 42,
-          type: "income",
-          date: "date1",
-        }),
-      };
+      (doc as jest.Mock).mockReturnValue(mockDoc);
 
-      docMock.mockReturnValue("docRef");
-      onSnapshotMock.mockImplementation((ref, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
+      listenToTransaction(mockTransactionId, mockListener);
 
-      const unsub = listenToTransaction(
-        userId,
-        bookId,
-        transactionId,
-        listener
-      );
-
-      expect(docMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "books",
-        bookId,
-        "transactions",
-        transactionId
-      );
-      expect(onSnapshotMock).toHaveBeenCalledWith(
-        "docRef",
-        expect.any(Function)
-      );
-      expect(listener).toHaveBeenCalledWith({
-        id: transactionId,
-        userId: userId,
-        bookId: bookId,
-        description: "desc",
-        amount: 42,
-        type: "income",
-        date: "date1",
-        categoryId: null,
-      });
-      expect(unsub).toBe("unsub");
-    });
-
-    it("calls listener with null if transaction not found", () => {
-      const userId = "user";
-      const bookId = "book";
-      const transactionId = "tid";
-      const listener = jest.fn();
-
-      const docSnapMock = {
-        id: transactionId,
-        data: jest.fn().mockReturnValue(undefined),
-      };
-
-      docMock.mockReturnValue("docRef");
-      onSnapshotMock.mockImplementation((ref, cb) => {
-        cb(docSnapMock);
-        return "unsub";
-      });
-
-      listenToTransaction(userId, bookId, transactionId, listener);
-
-      expect(listener).toHaveBeenCalledWith(null);
+      expect(doc).toHaveBeenCalledWith(db, "transactions", mockTransactionId);
+      expect(onSnapshot).toHaveBeenCalledWith(mockDoc, expect.any(Function));
     });
   });
 
   describe("addTransaction", () => {
-    it("calls addDoc with correct data", async () => {
-      const userId = "user";
-      const bookId = "book";
-      const transaction: Omit<Transaction, "id" | "userId" | "bookId"> = {
-        description: "desc",
-        amount: 21,
-        type: "expense",
-        date: actualFirestore.Timestamp.fromDate(new Date()),
+    it("should add a new transaction and update book document", async () => {
+      const mockBookId = "book1";
+      const mockTransactionFormData: TransactionFormData = {
+        description: "Test description",
+        amount: 100,
+        type: "income",
+        date: Timestamp.fromDate(new Date()),
         categoryId: null,
       };
+      const mockTransactionDoc = { id: "newTransactionId" };
+      const mockBookSnapshot = {
+        exists: jest.fn().mockReturnValue(true),
+        data: jest.fn().mockReturnValue({ transactionIds: ["existingTransactionId"] }),
+      };
 
-      collectionMock.mockReturnValue("colRef");
-      addDocMock.mockResolvedValue(undefined);
+      (addDoc as jest.Mock).mockResolvedValue(mockTransactionDoc);
+      (getDoc as jest.Mock).mockResolvedValue(mockBookSnapshot);
 
-      await addTransaction(userId, bookId, transaction);
+      await addTransaction(mockBookId, mockTransactionFormData);
 
-      expect(collectionMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "books",
-        bookId,
-        "transactions"
-      );
-      expect(addDocMock).toHaveBeenCalledWith("colRef", {
-        userId,
-        bookId,
-        description: transaction.description,
-        amount: transaction.amount,
-        type: transaction.type,
-        date: transaction.date,
-        categoryId: transaction.categoryId,
+      expect(addDoc).toHaveBeenCalledWith(collection(db, "transactions"), {
+        bookId: mockBookId,
+        description: mockTransactionFormData.description,
+        amount: mockTransactionFormData.amount,
+        type: mockTransactionFormData.type,
+        date: mockTransactionFormData.date,
+        archivedAt: null,
+        categoryId: mockTransactionFormData.categoryId,
+      });
+
+      expect(getDoc).toHaveBeenCalledWith(doc(db, "books", mockBookId));
+      expect(updateDoc).toHaveBeenCalledWith(doc(db, "books", mockBookId), {
+        transactionIds: ["existingTransactionId", "newTransactionId"],
       });
     });
   });
 
   describe("updateTransaction", () => {
-    it("calls updateDoc with correct doc ref and update data", async () => {
-      const userId = "user";
-      const bookId = "book";
-      const transactionId = "tid";
-      const update = {
-        description: "new desc",
-        amount: 100,
+    it("should update a transaction document", async () => {
+      const mockTransactionId = "transaction1";
+      const mockTransactionFormData: TransactionFormData = {
+        description: "Updated description",
+        amount: 200,
+        type: "expense",
+        date: Timestamp.fromDate(new Date()),
+        categoryId: "categoryId1",
       };
 
-      docMock.mockReturnValue("docRef");
-      updateDocMock.mockResolvedValue(undefined);
+      await updateTransaction(mockTransactionId, mockTransactionFormData);
 
-      await updateTransaction(userId, bookId, transactionId, update);
+      expect(updateDoc).toHaveBeenCalledWith(doc(db, "transactions", mockTransactionId), {
+        description: mockTransactionFormData.description,
+        amount: mockTransactionFormData.amount,
+        type: mockTransactionFormData.type,
+        date: mockTransactionFormData.date,
+        categoryId: mockTransactionFormData.categoryId,
+      });
+    });
+  });
 
-      expect(docMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "books",
-        bookId,
-        "transactions",
-        transactionId
-      );
-      expect(updateDocMock).toHaveBeenCalledWith("docRef", {
-        description: "new desc",
+  describe("updateTransactionCategory", () => {
+    it("should update the transaction category", async () => {
+      const mockTransaction = {
+        id: "transaction1",
+        bookId: "book1",
+        description: "Test description",
         amount: 100,
+        type: "income",
+        date: Timestamp.fromDate(new Date()),
+        categoryId: null,
+      };
+      const newCategoryId = "newCategoryId";
+
+      await updateTransactionCategory(mockTransaction, newCategoryId);
+
+      expect(updateDoc).toHaveBeenCalledWith(doc(db, "transactions", mockTransaction.id), {
+        description: mockTransaction.description,
+        amount: mockTransaction.amount,
+        type: mockTransaction.type,
+        date: mockTransaction.date,
+        categoryId: newCategoryId,
       });
     });
   });
 
   describe("deleteTransaction", () => {
-    it("calls deleteDoc with correct doc ref", async () => {
-      const userId = "user";
-      const bookId = "book";
-      const transactionId = "tid";
+    it("should delete a transaction document", async () => {
+      const mockTransactionId = "transaction1";
 
-      docMock.mockReturnValue("docRef");
-      deleteDocMock.mockResolvedValue(undefined);
+      await deleteTransaction(mockTransactionId);
 
-      await deleteTransaction(userId, bookId, transactionId);
-
-      expect(docMock).toHaveBeenCalledWith(
-        db,
-        "users",
-        userId,
-        "books",
-        bookId,
-        "transactions",
-        transactionId
-      );
-      expect(deleteDocMock).toHaveBeenCalledWith("docRef");
+      expect(deleteDoc).toHaveBeenCalledWith(doc(db, "transactions", mockTransactionId));
     });
   });
 });

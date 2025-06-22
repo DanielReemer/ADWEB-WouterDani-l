@@ -30,7 +30,6 @@ const mockDate = {
 
 const makeTransaction = (overrides?: Partial<Transaction>): Transaction => ({
   id: "t1",
-  userId: "u1",
   bookId: "b1",
   description: "Lunch",
   amount: 12.5,
@@ -108,7 +107,7 @@ describe("TransactionItem", () => {
     render(<TransactionItem transaction={makeTransaction()} categories={[]} />);
     fireEvent.click(screen.getByText("🗑️"));
     await waitFor(() =>
-      expect(deleteTransaction).toHaveBeenCalledWith("u1", "b1", "t1")
+      expect(deleteTransaction).toHaveBeenCalledWith("t1")
     );
   });
 
